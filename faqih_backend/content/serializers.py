@@ -1,31 +1,73 @@
+# content/serializers.py
+
+import json
 from rest_framework import serializers
 from .models import Category, Unit, Question
-import json
+
 
 class QuestionSerializer(serializers.ModelSerializer):
     options = serializers.SerializerMethodField()
 
     class Meta:
         model = Question
-        fields = ['id', 'text', 'question_type', 'options', 'correct_option', 'explanation']
+        fields = [
+            'id',
+            'question_type',
+            'text',
+            'options',
+            'correct_option',
+            'explanation',
+        ]
 
     def get_options(self, obj):
-        # Veritabanındaki metni (string) gerçek JSON objesine çevirip gönderir
+        """
+        Deserialize options_json from raw text into a proper JSON object
+        so the frontend receives a parsed structure, not a string.
+        """
         try:
             return json.loads(obj.options_json)
-        except:
-            return []
+        except (TypeError, ValueError):
+            return None
+
 
 class UnitSerializer(serializers.ModelSerializer):
     questions = QuestionSerializer(many=True, read_only=True)
-    
+
     class Meta:
         model = Unit
-        fields = ['id', 'title', 'order', 'questions']
+        fields = [
+            'id',
+            'title',
+            'questions',
+        ]
+
+
+class UnitSummarySerializer(serializers.ModelSerializer):
+    """
+    Lightweight unit serializer used inside CategorySerializer —
+    does NOT nest questions to keep the category list response small.
+    """
+    question_count = serializers.SerializerMethodField()
+
+    class Meta:
+        model = Unit
+        fields = [
+            'id',
+            'title',
+            'question_count',
+        ]
+
+    def get_question_count(self, obj):
+        return obj.questions.count()
+
 
 class CategorySerializer(serializers.ModelSerializer):
-    units = UnitSerializer(many=True, read_only=True)
+    units = UnitSummarySerializer(many=True, read_only=True)
 
     class Meta:
         model = Category
-        fields = ['id', 'title', 'description', 'image_url', 'units']
+        fields = [
+            'id',
+            'title',
+            'units',
+        ]

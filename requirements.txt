@@ -1,3 +1,16 @@
-Django>=4.2
-djangorestframework>=3.14.0
-django-cors-headers>=4.3.0
+# Faqih Backend — Python Dependencies
+# Install with: pip install -r requirements.txt
+ 
+# Core
+Django==5.1.5
+djangorestframework==3.15.2
+ 
+# Authentication
+djangorestframework-simplejwt==5.3.1
+ 
+# CORS (allow React Native frontend to call the API)
+django-cors-headers==4.4.0
+ 
+# Environment variables (.env support)
+python-dotenv==1.0.1
+ 
