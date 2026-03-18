@@ -4,7 +4,7 @@ import axios from 'axios';
 
 // ── Change this to your machine's local IP when running backend locally ──────
 // e.g. 'http://192.168.1.42:8000'  (do NOT use localhost on a real device)
-const BASE_URL = 'http://192.168.1.100:8000';
+const BASE_URL = 'http://192.168.1.103:8000';
 
 const client = axios.create({
   baseURL: BASE_URL,
