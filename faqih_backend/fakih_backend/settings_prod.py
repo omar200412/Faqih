@@ -1,48 +1,41 @@
 from .settings import *
 import os
-import dj_database_url
 
-# Canlı ortamda hata ayıklama modu KESİNLİKLE kapalı olmalıdır
 DEBUG = False
 
-# Güvenlik anahtarını ortam değişkenlerinden al (Yoksa build sırasında geçici bir tane kullan)
-SECRET_KEY = os.environ.get('SECRET_KEY', 'django-insecure-build-key-change-me')
-
-# Railway'in atayacağı rastgele domainlere ve senin kendi domainine izin ver
-ALLOWED_HOSTS = ['*']
-
-# --- CSRF VE HTTPS GÜVENLİK AYARLARI (403 HATASI KESİN ÇÖZÜMÜ) ---
-# Django'nun Railway üzerinden gelen form isteklerine (Admin girişi vb.) güvenmesi için
-CSRF_TRUSTED_ORIGINS = [
-    'https://faqih-production.up.railway.app',
-    'https://*.up.railway.app',
-    'https://faqih.site'
+ALLOWED_HOSTS = [
+    'faqih.site',
+    'www.faqih.site',
+    '.railway.app',
 ]
 
-# Railway sunucusu arkasında HTTPS kullanıldığını Django'ya kanıtlamak için
-SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
+import dj_database_url
+if os.environ.get('DATABASE_URL'):
+    DATABASES = {
+        'default': dj_database_url.config(
+            default=os.environ.get('DATABASE_URL'),
+            conn_max_age=600,
+        )
+    }
 
-# Çerezlerin (Cookies) sadece güvenli HTTPS bağlantısı üzerinden iletilmesini sağlar
-CSRF_COOKIE_SECURE = True
-SESSION_COOKIE_SECURE = True
-# -----------------------------------------------------------------
-
-# Veritabanı Ayarları: Railway'in otomatik sağlayacağı DATABASE_URL'i kullan
-# settings_prod.py içindeki DATABASES kısmını şununla değiştir:
-DATABASES = {
-    'default': dj_database_url.config(
-        # Eğer DATABASE_URL çevresel değişkeni bulunamazsa hata vermemesi için
-        conn_max_age=600,
-        conn_health_checks=True,
-    )
-}
-
-# Whitenoise Middleware Ayarı (Admin panelinin renkli ve düzgün görünmesi için)
-# SecurityMiddleware'den hemen sonra gelmesi gerektiği için 1. indexe ekliyoruz
-if 'whitenoise.middleware.WhiteNoiseMiddleware' not in MIDDLEWARE:
-    MIDDLEWARE.insert(1, 'whitenoise.middleware.WhiteNoiseMiddleware')
-
-# Statik Dosya (CSS, JS, Görseller) Ayarları
-STATIC_URL = '/static/'
+# Static files — Whitenoise ile serve et
 STATIC_ROOT = os.path.join(BASE_DIR, 'staticfiles')
+STATIC_URL  = '/static/'
+
+MIDDLEWARE = [
+    'django.middleware.security.SecurityMiddleware',
+    'whitenoise.middleware.WhiteNoiseMiddleware',  # ← ekle
+    'django.contrib.sessions.middleware.SessionMiddleware',
+    'django.middleware.common.CommonMiddleware',
+    'django.middleware.csrf.CsrfViewMiddleware',
+    'django.contrib.auth.middleware.AuthenticationMiddleware',
+    'django.contrib.messages.middleware.MessageMiddleware',
+    'django.middleware.clickjacking.XFrameOptionsMiddleware',
+]
+
 STATICFILES_STORAGE = 'whitenoise.storage.CompressedManifestStaticFilesStorage'
+
+CORS_ALLOW_ALL_ORIGINS = True
+SECRET_KEY = os.environ.get('SECRET_KEY', SECRET_KEY)
+SECURE_SSL_REDIRECT = True
+SESSION_COOKIE_SECURE = True
