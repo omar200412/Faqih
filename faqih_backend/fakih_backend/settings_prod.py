@@ -28,9 +28,10 @@ SESSION_COOKIE_SECURE = True
 # -----------------------------------------------------------------
 
 # Veritabanı Ayarları: Railway'in otomatik sağlayacağı DATABASE_URL'i kullan
+# settings_prod.py içindeki DATABASES kısmını şununla değiştir:
 DATABASES = {
     'default': dj_database_url.config(
-        default=os.environ.get('DATABASE_URL'),
+        # Eğer DATABASE_URL çevresel değişkeni bulunamazsa hata vermemesi için
         conn_max_age=600,
         conn_health_checks=True,
     )
