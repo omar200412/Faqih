@@ -39,3 +39,13 @@ CORS_ALLOW_ALL_ORIGINS = True
 SECRET_KEY = os.environ.get('SECRET_KEY', SECRET_KEY)
 SECURE_SSL_REDIRECT = True
 SESSION_COOKIE_SECURE = True
+
+# HTTPS redirect — Railway zaten HTTPS yapıyor, biz tekrar yönlendirmeyelim
+SECURE_SSL_REDIRECT = False
+SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
+SESSION_COOKIE_SECURE = True
+CSRF_COOKIE_SECURE = True
+CSRF_TRUSTED_ORIGINS = [
+    'https://faqih-production.up.railway.app',
+    'https://faqih.site',
+]
