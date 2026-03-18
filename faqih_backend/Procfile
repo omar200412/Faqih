@@ -1,1 +1,1 @@
-web: gunicorn fakih_backend.wsgi
+web: python manage.py collectstatic --noinput && gunicorn fakih_backend.wsgi --log-file -

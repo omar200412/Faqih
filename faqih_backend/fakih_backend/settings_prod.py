@@ -23,7 +23,17 @@ if os.environ.get('DATABASE_URL'):
 
 # --- MODERN ARA YÜZ (JAZZMIN) AYARLARI ---
 # INSTALLED_APPS'e Jazzmin'i en üste eklemeliyiz (Admin'den önce gelmeli)
-INSTALLED_APPS = ['jazzmin'] + [app for app in INSTALLED_APPS if app != 'jazzmin']
+INSTALLED_APPS = [
+    'jazzmin',  # En üstte olmalı
+    'django.contrib.admin',
+    'django.contrib.auth',
+    'django.contrib.contenttypes',
+    'django.contrib.sessions',
+    'django.contrib.messages',
+    'django.contrib.staticfiles',
+    'content', # Senin uygulama klasörün
+    'whitenoise.runserver_nostatic', # Geliştirme kolaylığı için isteğe bağlı
+]
 
 JAZZMIN_SETTINGS = {
     "site_title": "Faqih Admin",
