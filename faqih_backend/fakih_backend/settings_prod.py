@@ -4,71 +4,45 @@ import dj_database_url
 
 DEBUG = False
 
-# Railway ve kendi domainlerin
 ALLOWED_HOSTS = [
-    'faqih-production.up.railway.app', # Tam linki eklemek her zaman daha güvenlidir
+    'faqih-production.up.railway.app',
     'faqih.site',
     'www.faqih.site',
     '.railway.app',
+    '*'
 ]
 
-# Veritabanı
-if os.environ.get('DATABASE_URL'):
-    DATABASES = {
-        'default': dj_database_url.config(
-            default=os.environ.get('DATABASE_URL'),
-            conn_max_age=600,
-        )
-    }
-
-# --- MODERN ARA YÜZ (JAZZMIN) AYARLARI ---
-# INSTALLED_APPS'e Jazzmin'i en üste eklemeliyiz (Admin'den önce gelmeli)
-INSTALLED_APPS = [
-    'jazzmin',  # En üstte olmalı
-    'django.contrib.admin',
-    'django.contrib.auth',
-    'django.contrib.contenttypes',
-    'django.contrib.sessions',
-    'django.contrib.messages',
-    'django.contrib.staticfiles',
-    'content', # Senin uygulama klasörün
-    'whitenoise.runserver_nostatic', # Geliştirme kolaylığı için isteğe bağlı
-]
+# MODERN ARA YÜZ (JAZZMIN) - En üstte olmalı
+INSTALLED_APPS = ['jazzmin'] + [app for app in INSTALLED_APPS if app != 'jazzmin']
 
 JAZZMIN_SETTINGS = {
     "site_title": "Faqih Admin",
     "site_header": "Faqih",
     "site_brand": "Faqih Yönetim",
     "welcome_sign": "Faqih Yönetim Paneline Hoş Geldiniz",
-    "copyright": "Faqih Ltd",
-    "search_model": ["auth.User", "content.Kategoriler"],
-    "topmenu_links": [
-        {"name": "Ana Sayfa", "url": "admin:index", "permissions": ["auth.view_user"]},
-        {"name": "Siteyi Gör", "url": "https://faqih.site", "new_window": True},
-    ],
-    "show_sidebar": True,
-    "navigation_expanded": True,
-    "icons": {
-        "auth": "fas fa-users-cog",
-        "auth.user": "fas fa-user",
-        "content.Kategoriler": "fas fa-list",
-        "content.Sorular": "fas fa-question-circle",
-        "content.Üniteler": "fas fa-layer-group",
-    },
-    "changeform_format": "horizontal_tabs",
 }
 
 JAZZMIN_UI_TWEAKS = {
-    "theme": "flatly", # Modern ve temiz bir tema
+    "theme": "flatly",
     "dark_mode_theme": "darkly",
 }
-# ---------------------------------------
 
-# Statik Dosyalar (WhiteNoise Fix)
-STATIC_ROOT = os.path.join(BASE_DIR, 'staticfiles')
+# VERİTABANI BAĞLANTISI (Kurulumda çökmemesi için geçici SQLite koruması eklendi)
+DATABASES = {
+    'default': dj_database_url.config(
+        default=os.environ.get('DATABASE_URL', 'sqlite:///' + os.path.join(BASE_DIR, 'db.sqlite3')),
+        conn_max_age=600,
+    )
+}
+
+# STATİK DOSYA (CSS) AYARLARI
 STATIC_URL = '/static/'
+STATIC_ROOT = os.path.join(BASE_DIR, 'staticfiles')
 
-# Middleware (WhiteNoise en üstlerde olmalı)
+# DİKKAT: 'Manifest' kelimesini kaldırdık. Bu sayede ufak eksiklerde tasarım çökmez!
+STATICFILES_STORAGE = 'whitenoise.storage.CompressedStaticFilesStorage'
+
+# MIDDLEWARE (WhiteNoise'un konumu kesinleştirildi)
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
     'whitenoise.middleware.WhiteNoiseMiddleware',
@@ -80,12 +54,9 @@ MIDDLEWARE = [
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
 ]
 
-STATICFILES_STORAGE = 'whitenoise.storage.CompressedManifestStaticFilesStorage'
+SECRET_KEY = os.environ.get('SECRET_KEY', 'django-insecure-build-key')
 
-CORS_ALLOW_ALL_ORIGINS = True
-SECRET_KEY = os.environ.get('SECRET_KEY', SECRET_KEY)
-
-# HTTPS Ayarları
+# HTTPS ve GÜVENLİK
 SECURE_SSL_REDIRECT = False
 SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
 SESSION_COOKIE_SECURE = True
