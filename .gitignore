@@ -1,0 +1,17 @@
+# Python
+*.pyc
+__pycache__/
+venv/
+*.egg-info/
+
+# Django
+db.sqlite3
+staticfiles/
+media/
+
+# Ortam Değişkenleri
+.env
+
+# IDE
+.vscode/
+.idea/
