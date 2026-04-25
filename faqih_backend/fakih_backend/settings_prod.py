@@ -4,11 +4,12 @@ import dj_database_url
 
 DEBUG = False
 
+# Render'ın domainlerini ekledik
 ALLOWED_HOSTS = [
-    'faqih-production.up.railway.app',
+    'faqih.onrender.com', # Render'da kuracağımız isme göre bunu güncelleyeceğiz
+    '.onrender.com',
     'faqih.site',
     'www.faqih.site',
-    '.railway.app',
     '*'
 ]
 
@@ -27,7 +28,7 @@ JAZZMIN_UI_TWEAKS = {
     "dark_mode_theme": "darkly",
 }
 
-# VERİTABANI BAĞLANTISI (Kurulumda çökmemesi için geçici SQLite koruması eklendi)
+# VERİTABANI BAĞLANTISI 
 DATABASES = {
     'default': dj_database_url.config(
         default=os.environ.get('DATABASE_URL', 'sqlite:///' + os.path.join(BASE_DIR, 'db.sqlite3')),
@@ -38,11 +39,9 @@ DATABASES = {
 # STATİK DOSYA (CSS) AYARLARI
 STATIC_URL = '/static/'
 STATIC_ROOT = os.path.join(BASE_DIR, 'staticfiles')
-
-# DİKKAT: 'Manifest' kelimesini kaldırdık. Bu sayede ufak eksiklerde tasarım çökmez!
 STATICFILES_STORAGE = 'whitenoise.storage.CompressedStaticFilesStorage'
 
-# MIDDLEWARE (WhiteNoise'un konumu kesinleştirildi)
+# MIDDLEWARE
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
     'whitenoise.middleware.WhiteNoiseMiddleware',
@@ -61,7 +60,10 @@ SECURE_SSL_REDIRECT = False
 SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
 SESSION_COOKIE_SECURE = True
 CSRF_COOKIE_SECURE = True
+
+# Render için güvenlik izinleri eklendi
 CSRF_TRUSTED_ORIGINS = [
-    'https://faqih-production.up.railway.app',
+    'https://*.onrender.com',
     'https://faqih.site',
+    'https://www.faqih.site',
 ]
