@@ -2,6 +2,9 @@
 # Hata olursa kurulumu durdur
 set -o errexit
 
+# Render'da production ayarlarını kullan
+export DJANGO_SETTINGS_MODULE=fakih_backend.settings_prod
+
 # Paketleri kur
 pip install -r requirements.txt
 
