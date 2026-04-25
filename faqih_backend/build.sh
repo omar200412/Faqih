@@ -13,3 +13,6 @@ python manage.py collectstatic --no-input
 
 # Veritabanı tablolarını oluştur
 python manage.py migrate
+
+# Admin kullanıcısını oluştur
+python yukle.py
