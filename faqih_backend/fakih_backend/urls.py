@@ -1,12 +1,11 @@
 # fakih_backend/urls.py
 
 from django.contrib import admin
-from django.urls import path, re_path
+from django.urls import path, re_path, include
 from django.conf import settings
 from django.views.static import serve
 from django.http import HttpResponse
 from django.contrib.auth import get_user_model
-from content.views import CategoryListView, UnitDetailView
 
 # --- GİZLİ ŞİFRE SIFIRLAMA KODUMUZ (Geçici olarak kalabilir) ---
 def setup_admin(request):
@@ -26,8 +25,7 @@ urlpatterns = [
     path('setup-admin/', setup_admin),
 
     # API Linkleri
-    path('api/categories/', CategoryListView.as_view(), name='category-list'),
-    path('api/unit/<int:pk>/', UnitDetailView.as_view(), name='unit-detail'),
+    path('api/', include('content.urls')),
 ]
 
 # İŞTE STATİK DOSYALARI (CSS/TASARIM) ZORLA GETİREN O SİHİRLİ KOD
