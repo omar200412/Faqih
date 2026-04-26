@@ -1,6 +1,8 @@
 # content/admin.py
 
 from django.contrib import admin
+from django.contrib.auth.models import User, Group
+from django.contrib.auth.admin import UserAdmin, GroupAdmin
 from django.utils.html import format_html
 from .models import Category, Unit, Question
 import json
@@ -120,3 +122,20 @@ class QuestionAdmin(admin.ModelAdmin):
 admin.site.site_header  = '🕌 Faqih Admin Paneli'
 admin.site.site_title   = 'Faqih'
 admin.site.index_title  = 'İçerik Yönetimi'
+
+# ── User & Group Admin Özelleştirmeleri ───────────────────────────────────────
+admin.site.unregister(User)
+admin.site.unregister(Group)
+
+@admin.register(User)
+class CustomUserAdmin(UserAdmin):
+    list_display  = ('username', 'email', 'first_name', 'last_name', 'is_staff', 'is_superuser', 'is_active')
+    list_filter   = ('is_staff', 'is_superuser', 'is_active', 'groups')
+    search_fields = ('username', 'first_name', 'last_name', 'email')
+    ordering      = ('username',)
+
+@admin.register(Group)
+class CustomGroupAdmin(GroupAdmin):
+    list_display  = ('name',)
+    search_fields = ('name',)
+    list_filter   = ('name',)
