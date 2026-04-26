@@ -157,7 +157,7 @@ JAZZMIN_SETTINGS = {
     "usermenu_links": [
         {"name": "Şifre Değiştir", "url": "admin:password_change"},
     ],
-    "changeform_format": "",
+    "changeform_format": "single",
 }
 
 JAZZMIN_UI_TWEAKS = {
