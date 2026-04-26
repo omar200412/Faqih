@@ -47,6 +47,7 @@ INSTALLED_APPS = [
 ]
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
+    'whitenoise.middleware.WhiteNoiseMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
     'django.middleware.common.CommonMiddleware',
     'django.middleware.csrf.CsrfViewMiddleware',
@@ -156,7 +157,7 @@ JAZZMIN_SETTINGS = {
     "usermenu_links": [
         {"name": "Şifre Değiştir", "url": "admin:password_change"},
     ],
-    "changeform_format": "horizontal_tabs",
+    "changeform_format": "",
 }
 
 JAZZMIN_UI_TWEAKS = {
@@ -190,3 +191,5 @@ JAZZMIN_UI_TWEAKS = {
         "success": "btn-success",
     },
 }
+
+CSRF_TRUSTED_ORIGINS = ['https://faqih-backend.onrender.com']

@@ -121,20 +121,4 @@ class QuestionAdmin(admin.ModelAdmin):
 # ── Admin site başlıkları ─────────────────────────────────────────────────────
 admin.site.site_header  = '🕌 Faqih Admin Paneli'
 admin.site.site_title   = 'Faqih'
-admin.site.index_title  = 'İçerik Yönetimi'
-
-# ── User & Group Admin Özelleştirmeleri ───────────────────────────────────────
-admin.site.unregister(User)
-admin.site.unregister(Group)
-
-@admin.register(User)
-class CustomUserAdmin(UserAdmin):
-    # UserAdmin'in varsayılan list_display ve form yapılarını koruyup sadece list_display'e ekleme yapıyoruz.
-    # Güvenlik ve çökme riskine karşı (özellikle many-to-many alanlar nedeniyle) çok fazla şeyi ezmiyoruz.
-    pass
-
-@admin.register(Group)
-class CustomGroupAdmin(GroupAdmin):
-    # GroupAdmin'i olduğu gibi bırakmak Django'nun varsayılan permissions ayarlarının (filter_horizontal) 
-    # Render'da 500 hatası vermesini engeller.
-    pass
+admin.site.index_title  = 'İçerik Yönetimi'
