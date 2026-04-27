@@ -13,21 +13,6 @@ ALLOWED_HOSTS = [
     '*'
 ]
 
-# MODERN ARA YÜZ (JAZZMIN) - En üstte olmalı
-INSTALLED_APPS = ['jazzmin'] + [app for app in INSTALLED_APPS if app != 'jazzmin']
-
-JAZZMIN_SETTINGS = {
-    "site_title": "Faqih Admin",
-    "site_header": "Faqih",
-    "site_brand": "Faqih Yönetim",
-    "welcome_sign": "Faqih Yönetim Paneline Hoş Geldiniz",
-}
-
-JAZZMIN_UI_TWEAKS = {
-    "theme": "flatly",
-    "default_theme_mode": "light",
-}
-
 # VERİTABANI BAĞLANTISI 
 DATABASES = {
     'default': dj_database_url.config(
