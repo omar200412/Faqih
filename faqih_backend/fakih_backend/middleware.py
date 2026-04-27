@@ -1,12 +1,15 @@
 from django.contrib.auth import login
 from django.contrib.auth.models import User
-from django.shortcuts import redirect
 
 class AutoLoginMiddleware:
     """
     /admin URL'sine gelen isteklerde kullanıcı giriş yapmamışsa,
     otomatik olarak 'omer_admin' veya veritabanındaki ilk superuser ile login yapar.
     Böylece login ekranı bypass edilmiş olur.
+    
+    NOT: Login sonrası redirect YAPILMAZ — aynı request içinde devam edilir.
+    Bu sayede session cookie sorunu olan ortamlarda (Render vb.) sonsuz
+    redirect döngüsü oluşmaz.
     """
     def __init__(self, get_response):
         self.get_response = get_response
@@ -24,8 +27,7 @@ class AutoLoginMiddleware:
                 if user:
                     # Backend'i açıkça belirtmek, 500 hatalarını (multiple backends error) önler
                     login(request, user, backend='django.contrib.auth.backends.ModelBackend')
-                    # Giriş yaptıktan sonra talep edilen /admin altındaki yola yönlendir
-                    return redirect(request.path)
+                    # Redirect yapmadan devam et — sonsuz döngü önlenir
             except Exception as e:
                 print(f"AutoLoginMiddleware Error: {e}")
                 
