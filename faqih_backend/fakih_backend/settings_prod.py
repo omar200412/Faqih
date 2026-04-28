@@ -2,7 +2,7 @@ from .settings import *
 import os
 import dj_database_url
 
-DEBUG = True  # TEMPORARY: to see actual error traceback — revert after debugging
+DEBUG = False
 
 # Hata detaylarını Render loglarına yaz
 LOGGING = {
