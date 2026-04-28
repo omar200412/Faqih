@@ -2,7 +2,25 @@ from .settings import *
 import os
 import dj_database_url
 
-DEBUG = False
+DEBUG = True  # TEMPORARY: to see actual error traceback — revert after debugging
+
+# Hata detaylarını Render loglarına yaz
+LOGGING = {
+    'version': 1,
+    'disable_existing_loggers': False,
+    'handlers': {
+        'console': {
+            'class': 'logging.StreamHandler',
+        },
+    },
+    'loggers': {
+        'django': {
+            'handlers': ['console'],
+            'level': 'ERROR',
+            'propagate': True,
+        },
+    },
+}
 
 # Render'ın domainlerini ekledik
 ALLOWED_HOSTS = [
