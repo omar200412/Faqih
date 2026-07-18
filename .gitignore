@@ -15,3 +15,9 @@ media/
 # IDE
 .vscode/
 .idea/
+
+# Frontend (Expo / React Native)
+node_modules/
+.expo/
+faqih-frontend/dist/
+faqih-frontend/web-build/
