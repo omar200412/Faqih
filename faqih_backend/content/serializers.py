@@ -6,7 +6,9 @@ from .models import Category, Unit, Question
 
 
 class QuestionSerializer(serializers.ModelSerializer):
+    question_type = serializers.SerializerMethodField()
     options = serializers.SerializerMethodField()
+    correct_option = serializers.SerializerMethodField()
 
     class Meta:
         model = Question
@@ -19,15 +21,43 @@ class QuestionSerializer(serializers.ModelSerializer):
             'explanation',
         ]
 
-    def get_options(self, obj):
-        """
-        Deserialize options_json from raw text into a proper JSON object
-        so the frontend receives a parsed structure, not a string.
-        """
+    def _parsed_options(self, obj):
         try:
             return json.loads(obj.options_json)
         except (TypeError, ValueError):
             return None
+
+    def get_question_type(self, obj):
+        # Eski kayıtlarda 'multiple_choice' kullanılmış; uygulama 'mcq' bekliyor
+        if obj.question_type == 'multiple_choice':
+            return 'mcq'
+        return obj.question_type
+
+    def get_options(self, obj):
+        """
+        Deserialize options_json from raw text into a proper JSON object
+        so the frontend receives a parsed structure, not a string.
+        Normalizes legacy formats to what the app expects.
+        """
+        data = self._parsed_options(obj)
+        # Eski format: [{"id": "A", "text": "..."}] → düz metin listesi
+        if isinstance(data, list) and data and isinstance(data[0], dict):
+            return [o.get('text') or o.get('id', '') for o in data]
+        # Hotspot: text alanı yoksa id'yi göster
+        if isinstance(data, dict) and isinstance(data.get('hotspots'), list):
+            for h in data['hotspots']:
+                if isinstance(h, dict) and not h.get('text'):
+                    h['text'] = h.get('id', '')
+        return data
+
+    def get_correct_option(self, obj):
+        data = self._parsed_options(obj)
+        # Eski formatta correct_option seçenek id'siydi ("D") — metnine çevir
+        if isinstance(data, list) and data and isinstance(data[0], dict):
+            for o in data:
+                if o.get('id') == obj.correct_option:
+                    return o.get('text') or obj.correct_option
+        return obj.correct_option
 
 
 class UnitSerializer(serializers.ModelSerializer):
