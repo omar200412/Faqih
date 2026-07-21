@@ -1,8 +1,8 @@
 // src/screens/QuizScreen.js
 
-import React, { useEffect, useState, useRef } from 'react';
+import React, { useEffect, useState, useRef, useMemo } from 'react';
 import {
-  View, Text, ScrollView, TouchableOpacity,
+  View, Text, ScrollView, TouchableOpacity, Image, Linking,
   StyleSheet, Animated, ActivityIndicator, SafeAreaView, StatusBar,
 } from 'react-native';
 import { getUnit } from '../API';
@@ -23,6 +23,13 @@ export default function QuizScreen({ route, navigation }) {
   const [score, setScore]       = useState(0);
   const [state, setState]       = useState(STATE.LOADING);
   const [mistakes, setMistakes] = useState([]);
+  const [resultCorrect, setResultCorrect] = useState(false);
+
+  // Eşleştirme sorusu durumu
+  const [matchSel, setMatchSel]     = useState(null);
+  const [matched, setMatched]       = useState({});
+  const [matchWrong, setMatchWrong] = useState(0);
+  const [wrongFlash, setWrongFlash] = useState(null);
 
   const feedbackAnim = useRef(new Animated.Value(0)).current;
   const progressAnim = useRef(new Animated.Value(0)).current;
@@ -52,15 +59,69 @@ export default function QuizScreen({ route, navigation }) {
   }, [qIndex, unit]);
 
   const question = unit?.questions[qIndex];
+  const pairs = question?.question_type === 'matching' ? (question.options?.pairs ?? []) : [];
+  const rightOrder = useMemo(() => {
+    const idx = pairs.map((_, i) => i);
+    for (let i = idx.length - 1; i > 0; i--) {
+      const j = Math.floor(Math.random() * (i + 1));
+      [idx[i], idx[j]] = [idx[j], idx[i]];
+    }
+    return idx;
+  }, [question?.id]);
+
+  const resetMatching = () => {
+    setMatchSel(null); setMatched({}); setMatchWrong(0); setWrongFlash(null);
+  };
 
   const handleAnswer = (answer) => {
     if (state !== STATE.QUESTION) return;
     setSelected(answer);
     const isCorrect = answer === question.correct_option;
+    setResultCorrect(isCorrect);
     if (isCorrect) setScore(s => s + 1);
     else { setMistakes(m => [...m, { question, chosen: answer }]); shake(); }
     setState(STATE.FEEDBACK);
     Animated.timing(feedbackAnim, { toValue: 1, duration: 300, useNativeDriver: true }).start();
+  };
+
+  const handleMatchLeft = (i) => {
+    if (state !== STATE.QUESTION || matched[i]) return;
+    setMatchSel(i);
+  };
+
+  const handleMatchRight = (i) => {
+    if (state !== STATE.QUESTION || matchSel === null || matched[i]) return;
+    if (i === matchSel) {
+      const next = { ...matched, [i]: true };
+      setMatched(next);
+      setMatchSel(null);
+      if (Object.keys(next).length === pairs.length) {
+        const ok = matchWrong === 0;
+        setResultCorrect(ok);
+        if (ok) setScore(s => s + 1);
+        else setMistakes(m => [...m, { question, chosen: `${matchWrong} ✗` }]);
+        setSelected('__done__');
+        setState(STATE.FEEDBACK);
+        Animated.timing(feedbackAnim, { toValue: 1, duration: 300, useNativeDriver: true }).start();
+      }
+    } else {
+      setMatchWrong(w => w + 1);
+      setWrongFlash(i);
+      shake();
+      setTimeout(() => setWrongFlash(null), 450);
+      setMatchSel(null);
+    }
+  };
+
+  const handleVideoDone = () => {
+    if (state !== STATE.QUESTION) return;
+    setScore(s => s + 1);
+    const next = qIndex + 1;
+    if (next >= unit.questions.length) { setState(STATE.RESULTS); }
+    else {
+      feedbackAnim.setValue(0); setSelected(null); resetMatching();
+      setQIndex(next); setState(STATE.QUESTION); animateCardIn();
+    }
   };
 
   const shake = () => {
@@ -76,13 +137,13 @@ export default function QuizScreen({ route, navigation }) {
     const next = qIndex + 1;
     if (next >= unit.questions.length) { setState(STATE.RESULTS); }
     else {
-      feedbackAnim.setValue(0); setSelected(null);
+      feedbackAnim.setValue(0); setSelected(null); resetMatching();
       setQIndex(next); setState(STATE.QUESTION); animateCardIn();
     }
   };
 
   const handleRetry = () => {
-    setQIndex(0); setSelected(null); setScore(0); setMistakes([]);
+    setQIndex(0); setSelected(null); setScore(0); setMistakes([]); resetMatching();
     setState(STATE.QUESTION); feedbackAnim.setValue(0); animateCardIn();
   };
 
@@ -94,7 +155,7 @@ export default function QuizScreen({ route, navigation }) {
   };
 
   const progressWidth = progressAnim.interpolate({ inputRange: [0, 1], outputRange: ['0%', '100%'] });
-  const isCorrect     = selected === question?.correct_option;
+  const isCorrect     = resultCorrect;
   const xpEarned      = score * 10;
 
   // Loading
@@ -196,14 +257,22 @@ export default function QuizScreen({ route, navigation }) {
         ]}>
           <View style={styles.qTypeTag}>
             <Text style={styles.qTypeText}>
-              {question.question_type === 'hotspot' ? t.quiz.typeHotspot : t.quiz.typeMultiple}
+              {question.question_type === 'hotspot' ? t.quiz.typeHotspot
+                : question.question_type === 'matching' ? t.quiz.typeMatching
+                : question.question_type === 'video' ? t.quiz.typeVideo
+                : question.question_type === 'image' ? t.quiz.typeImage
+                : t.quiz.typeMultiple}
             </Text>
           </View>
           <Text style={[styles.questionText, isRTL && styles.rtlText]}>{question.text}</Text>
+          {question.image ? (
+            <Image source={{ uri: question.image }} style={styles.questionImage} resizeMode="cover" />
+          ) : null}
         </Animated.View>
 
         <View style={styles.optionsContainer}>
-          {question.question_type === 'mcq' && Array.isArray(question.options) &&
+          {(question.question_type === 'mcq' || question.question_type === 'image') &&
+            Array.isArray(question.options) &&
             question.options.map((opt, i) => (
               <OptionButton key={i} index={i} text={opt}
                 state={getOptionState(opt)} onPress={() => handleAnswer(opt)} />
@@ -215,6 +284,53 @@ export default function QuizScreen({ route, navigation }) {
                 state={getOptionState(hs.id)} onPress={() => handleAnswer(hs.id)} />
             ))
           }
+          {question.question_type === 'matching' && pairs.length > 0 && (
+            <View>
+              <Text style={[styles.matchHint, isRTL && styles.rtlText]}>{t.quiz.matchingHint}</Text>
+              <View style={[styles.matchWrap, { flexDirection }]}>
+                <View style={styles.matchCol}>
+                  {pairs.map((p, i) => (
+                    <TouchableOpacity key={i} activeOpacity={0.8}
+                      style={[styles.matchChip,
+                        matchSel === i && styles.matchChipSel,
+                        matched[i] && styles.matchChipDone]}
+                      onPress={() => handleMatchLeft(i)}>
+                      <Text style={[styles.matchChipText, matched[i] && styles.matchChipTextDone]}>
+                        {p[0]}
+                      </Text>
+                    </TouchableOpacity>
+                  ))}
+                </View>
+                <View style={styles.matchCol}>
+                  {rightOrder.map((ri) => (
+                    <TouchableOpacity key={ri} activeOpacity={0.8}
+                      style={[styles.matchChip, styles.matchChipRight,
+                        matched[ri] && styles.matchChipDone,
+                        wrongFlash === ri && styles.matchChipWrong]}
+                      onPress={() => handleMatchRight(ri)}>
+                      <Text style={[styles.matchChipText, matched[ri] && styles.matchChipTextDone]}>
+                        {pairs[ri][1]}
+                      </Text>
+                    </TouchableOpacity>
+                  ))}
+                </View>
+              </View>
+            </View>
+          )}
+          {question.question_type === 'video' && (
+            <View style={styles.videoBlock}>
+              <View style={styles.videoThumb}>
+                <View style={styles.videoPlayCircle}><Text style={styles.videoPlayIcon}>▶</Text></View>
+              </View>
+              <PrimaryButton title={t.quiz.watchVideo}
+                onPress={() => question.options?.url && Linking.openURL(question.options.url)} />
+              <TouchableOpacity onPress={handleVideoDone} style={styles.videoDoneBtn}>
+                <Text style={styles.videoDoneText}>
+                  {qIndex + 1 < unit.questions.length ? t.quiz.continue : t.quiz.seeResults}
+                </Text>
+              </TouchableOpacity>
+            </View>
+          )}
         </View>
 
         {state === STATE.FEEDBACK && (
@@ -262,8 +378,37 @@ const styles = StyleSheet.create({
   qTypeTag:      { alignSelf: 'flex-start', backgroundColor: colors.bg, borderRadius: radius.full, paddingHorizontal: 10, paddingVertical: 4, marginBottom: 14 },
   qTypeText:     { fontSize: 11, color: colors.textMuted, fontWeight: '600', letterSpacing: 0.5 },
   questionText:  { fontSize: 20, fontFamily: fonts.heading, color: colors.text, lineHeight: 30, fontWeight: '700' },
+  questionImage: { width: '100%', aspectRatio: 16 / 10, borderRadius: radius.md, marginTop: 14, backgroundColor: colors.neutral },
   rtlText:       { textAlign: 'right' },
   optionsContainer: { gap: 2 },
+  matchHint:     { fontSize: 12, color: colors.textMuted, fontWeight: '600', marginBottom: 10, textAlign: 'center' },
+  matchWrap:     { gap: 10 },
+  matchCol:      { flex: 1, gap: 8 },
+  matchChip: {
+    backgroundColor: colors.card, borderRadius: radius.md, borderWidth: 1.5, borderColor: colors.neutral,
+    paddingVertical: 14, paddingHorizontal: 10, alignItems: 'center', justifyContent: 'center', minHeight: 52,
+  },
+  matchChipRight:    { backgroundColor: colors.goldPale, borderColor: colors.goldLight },
+  matchChipSel:      { borderColor: colors.gold, borderWidth: 2, ...shadow.sm },
+  matchChipDone:     { backgroundColor: colors.correctBg, borderColor: colors.correct },
+  matchChipWrong:    { backgroundColor: colors.wrongBg, borderColor: colors.wrong },
+  matchChipText:     { fontSize: 13, fontWeight: '700', color: colors.text, textAlign: 'center' },
+  matchChipTextDone: { color: colors.correct },
+  videoBlock:    { gap: 12 },
+  videoThumb: {
+    aspectRatio: 16 / 9, borderRadius: radius.lg, backgroundColor: colors.primaryDark,
+    alignItems: 'center', justifyContent: 'center', ...shadow.md,
+  },
+  videoPlayCircle: {
+    width: 56, height: 56, borderRadius: 28, backgroundColor: colors.gold,
+    alignItems: 'center', justifyContent: 'center', paddingLeft: 4,
+  },
+  videoPlayIcon: { fontSize: 22, color: colors.white, fontWeight: '900' },
+  videoDoneBtn: {
+    backgroundColor: colors.card, borderRadius: radius.lg, borderWidth: 1.5, borderColor: colors.primary,
+    paddingVertical: 14, alignItems: 'center',
+  },
+  videoDoneText: { fontSize: 15, fontWeight: '700', color: colors.primary },
   feedbackPanel:    { borderRadius: radius.xl, padding: spacing.lg, marginTop: spacing.md, ...shadow.lg },
   feedbackCorrect:  { backgroundColor: colors.correctBg, borderWidth: 1.5, borderColor: colors.correct },
   feedbackWrong:    { backgroundColor: colors.wrongBg,   borderWidth: 1.5, borderColor: colors.wrong },

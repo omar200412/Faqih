@@ -22,6 +22,11 @@ export default {
   quiz: {
     typeMultiple:   'اختيار من متعدد',
     typeHotspot:    'خريطة تفاعلية',
+    typeMatching:   'مطابقة',
+    typeVideo:      'درس فيديو',
+    typeImage:      'سؤال مصوّر',
+    watchVideo:     'شاهد الفيديو  ▶',
+    matchingHint:   'اختر مصطلحاً من اليسار ثم معناه من اليمين',
     correct:        '✓  صحيح!',
     wrong:          '✗  خطأ!',
     continue:       '→  استمر',

@@ -7,17 +7,16 @@ from django.views.decorators.http import require_POST
 
 from content.models import Category, Question, Unit
 
-# Panelde şu an desteklenen soru türleri
+MAX_IMAGE_BYTES = 2 * 1024 * 1024  # 2 MB
+
+# Panelde desteklenen soru türleri
 ENABLED_TYPES = {
     'mcq':        {'label': 'Çoktan Seçmeli', 'glyph': 'A·B', 'desc': '4 seçenek, tek doğru cevap'},
     'true_false': {'label': 'Doğru / Yanlış', 'glyph': '✓✗',  'desc': 'Hızlı bilgi kontrolü'},
+    'matching':   {'label': 'Eşleştirme',     'glyph': '⇄',   'desc': 'Terimleri anlamlarıyla eşleştir'},
+    'image':      {'label': 'Resimli Soru',   'glyph': '▣',   'desc': 'Görsel üzerinden soru sor'},
+    'video':      {'label': 'Video Ders',     'glyph': '▶',   'desc': 'YouTube bağlantısı ile'},
 }
-# Yakında eklenecek türler (tıklanamaz gösterilir)
-COMING_TYPES = [
-    {'label': 'Eşleştirme',   'glyph': '⇄', 'desc': 'Yakında'},
-    {'label': 'Resimli Soru', 'glyph': '▣', 'desc': 'Yakında'},
-    {'label': 'Video Ders',   'glyph': '▶', 'desc': 'Yakında'},
-]
 TYPE_LABELS = {
     'mcq': 'Çoktan Seçmeli',
     'multiple_choice': 'Çoktan Seçmeli',
@@ -56,12 +55,30 @@ def _correct_text(question):
     return question.correct_option
 
 
+def _pairs(question):
+    data = _parsed_options(question)
+    if isinstance(data, dict) and isinstance(data.get('pairs'), list):
+        return [list(p) for p in data['pairs'] if isinstance(p, (list, tuple)) and len(p) == 2]
+    return []
+
+
+def _video_url(question):
+    data = _parsed_options(question)
+    if isinstance(data, dict):
+        return data.get('url', '')
+    return ''
+
+
 def _row(question):
     qtype = 'mcq' if question.question_type == 'multiple_choice' else question.question_type
     if qtype in ('mcq', 'image'):
         hint = 'Doğru: ' + (_correct_text(question) or '—')
     elif qtype == 'true_false':
         hint = 'Doğru cevap: ' + (question.correct_option or '—')
+    elif qtype == 'matching':
+        hint = '%d eşleştirme çifti' % len(_pairs(question))
+    elif qtype == 'video':
+        hint = _video_url(question) or 'Bağlantı yok'
     else:
         hint = TYPE_LABELS.get(qtype, qtype)
     return {
@@ -106,8 +123,24 @@ def type_picker(request, unit_id):
     ctx = _sidebar_context(unit)
     ctx['unit'] = unit
     ctx['enabled_types'] = [{'key': k, **v} for k, v in ENABLED_TYPES.items()]
-    ctx['coming_types'] = COMING_TYPES
     return render(request, 'panel/type_picker.html', ctx)
+
+
+def _read_mcq_options(request, errors):
+    """A-D seçeneklerini ve doğru işaretini okur; (options_json, correct) döndürür."""
+    options = [(request.POST.get('opt%d' % i) or '').strip() for i in range(4)]
+    filled = [o for o in options if o]
+    if len(filled) < 2:
+        errors.append('En az 2 seçenek doldurulmalı.')
+    try:
+        idx = int(request.POST.get('correct', ''))
+    except (TypeError, ValueError):
+        idx = -1
+    if not (0 <= idx <= 3) or not options[idx]:
+        errors.append('Doğru cevabı ✓ ile işaretle (boş seçenek olamaz).')
+    if errors:
+        return '', ''
+    return json.dumps(filled, ensure_ascii=False), options[idx]
 
 
 def _save_question(request, unit, qtype, question=None):
@@ -116,30 +149,50 @@ def _save_question(request, unit, qtype, question=None):
     text = (request.POST.get('text') or '').strip()
     explanation = (request.POST.get('explanation') or '').strip()
     if not text:
-        errors.append('Soru metni boş olamaz.')
+        errors.append('Video başlığı boş olamaz.' if qtype == 'video' else 'Soru metni boş olamaz.')
 
     options_json = ''
     correct = ''
+    upload = None
 
     if qtype == 'mcq':
-        options = [(request.POST.get('opt%d' % i) or '').strip() for i in range(4)]
-        filled = [o for o in options if o]
-        if len(filled) < 2:
-            errors.append('En az 2 seçenek doldurulmalı.')
-        try:
-            idx = int(request.POST.get('correct', ''))
-        except (TypeError, ValueError):
-            idx = -1
-        if not (0 <= idx <= 3) or not options[idx]:
-            errors.append('Doğru cevabı ✓ ile işaretle (boş seçenek olamaz).')
-        if not errors:
-            options_json = json.dumps(filled, ensure_ascii=False)
-            correct = options[idx]
+        options_json, correct = _read_mcq_options(request, errors)
+
     elif qtype == 'true_false':
         correct = request.POST.get('correct', '')
         if correct not in ('Doğru', 'Yanlış'):
             errors.append('Doğru cevabı seç: Doğru mu, Yanlış mı?')
         options_json = json.dumps(['Doğru', 'Yanlış'], ensure_ascii=False)
+
+    elif qtype == 'matching':
+        pairs = []
+        for left, right in zip(request.POST.getlist('pl'), request.POST.getlist('pr')):
+            left, right = left.strip(), right.strip()
+            if left and right:
+                pairs.append([left, right])
+            elif left or right:
+                errors.append('Her çiftin iki tarafı da dolu olmalı.')
+                break
+        if not errors and len(pairs) < 2:
+            errors.append('En az 2 eşleştirme çifti gerekli.')
+        options_json = json.dumps({'pairs': pairs}, ensure_ascii=False)
+
+    elif qtype == 'image':
+        options_json, correct = _read_mcq_options(request, errors)
+        upload = request.FILES.get('image')
+        if upload:
+            if upload.size > MAX_IMAGE_BYTES:
+                errors.append('Görsel en fazla 2 MB olabilir.')
+            elif not (upload.content_type or '').startswith('image/'):
+                errors.append('Sadece resim dosyası yüklenebilir (JPG/PNG).')
+        elif question is None or not question.image_data:
+            errors.append('Bir görsel seç.')
+
+    elif qtype == 'video':
+        url = (request.POST.get('url') or '').strip()
+        if not url.startswith(('http://', 'https://')):
+            errors.append('Geçerli bir video bağlantısı gir (https:// ile başlamalı).')
+        options_json = json.dumps({'url': url}, ensure_ascii=False)
 
     if errors:
         return errors
@@ -150,8 +203,39 @@ def _save_question(request, unit, qtype, question=None):
     question.options_json = options_json
     question.correct_option = correct
     question.explanation = explanation
+    if upload is not None:
+        question.image_data = upload.read()
+        question.image_mime = upload.content_type or 'image/jpeg'
     question.save()
     return []
+
+
+def _initial_from_post(request):
+    return {
+        'text': request.POST.get('text', ''),
+        'explanation': request.POST.get('explanation', ''),
+        'options': [(request.POST.get('opt%d' % i) or '') for i in range(4)],
+        'correct': request.POST.get('correct', ''),
+        'pairs': [list(p) for p in zip(request.POST.getlist('pl'), request.POST.getlist('pr'))],
+        'url': request.POST.get('url', ''),
+    }
+
+
+def _initial_from_question(question, qtype):
+    opts = (_option_texts(question) + ['', '', '', ''])[:4]
+    correct_text = _correct_text(question)
+    if qtype in ('mcq', 'image'):
+        correct = str(opts.index(correct_text)) if correct_text in opts else ''
+    else:
+        correct = question.correct_option
+    return {
+        'text': question.text,
+        'explanation': question.explanation,
+        'options': opts,
+        'correct': correct,
+        'pairs': _pairs(question),
+        'url': _video_url(question),
+    }
 
 
 @staff_member_required
@@ -174,31 +258,16 @@ def question_form(request, unit_id=None, qtype=None, question_id=None):
         if not errors:
             messages.success(request, 'Soru kaydedildi ✓' if question else 'Soru eklendi ✓')
             return redirect('panel:unit', unit.id)
-
-    # Form başlangıç değerleri
-    if request.method == 'POST':
-        initial = {
-            'text': request.POST.get('text', ''),
-            'explanation': request.POST.get('explanation', ''),
-            'options': [(request.POST.get('opt%d' % i) or '') for i in range(4)],
-            'correct': request.POST.get('correct', ''),
-        }
+        initial = _initial_from_post(request)
     elif question is not None:
-        opts = _option_texts(question)
-        opts = (opts + ['', '', '', ''])[:4]
-        correct_text = _correct_text(question)
-        if qtype == 'mcq':
-            correct = str(opts.index(correct_text)) if correct_text in opts else ''
-        else:
-            correct = question.correct_option
-        initial = {
-            'text': question.text,
-            'explanation': question.explanation,
-            'options': opts,
-            'correct': correct,
-        }
+        initial = _initial_from_question(question, qtype)
     else:
-        initial = {'text': '', 'explanation': '', 'options': ['', '', '', ''], 'correct': ''}
+        initial = {'text': '', 'explanation': '', 'options': ['', '', '', ''],
+                   'correct': '', 'pairs': [], 'url': ''}
+
+    pairs = initial.get('pairs') or []
+    while len(pairs) < 3:
+        pairs.append(['', ''])
 
     ctx = _sidebar_context(unit)
     ctx.update({
@@ -212,6 +281,8 @@ def question_form(request, unit_id=None, qtype=None, question_id=None):
             {'i': i, 'letter': 'ABCD'[i], 'value': initial['options'][i]}
             for i in range(4)
         ],
+        'pair_rows': pairs,
+        'has_image': bool(question and question.image_data),
     })
     return render(request, 'panel/question_form.html', ctx)
 

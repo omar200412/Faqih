@@ -12,19 +12,40 @@
   </div>
 
   <div class="editor">
-    <form class="form" method="post" id="qform">
+    <form class="form" method="post" id="qform"
+          {% if qtype == 'image' %}enctype="multipart/form-data"{% endif %}>
       {% csrf_token %}
       {% if errors %}
         <div class="errors">{% for e in errors %}<div>{{ e }}</div>{% endfor %}</div>
       {% endif %}
 
       <div class="field">
-        <label for="f-text">{% if qtype == 'true_false' %}İfade{% else %}Soru metni{% endif %}</label>
+        <label for="f-text">{% if qtype == 'true_false' %}İfade{% elif qtype == 'video' %}Video başlığı{% else %}Soru metni{% endif %}</label>
         <textarea id="f-text" name="text" rows="2" required
-          placeholder="{% if qtype == 'true_false' %}Örn: Unutarak yemek yemek orucu bozar.{% else %}Soruyu buraya yaz…{% endif %}">{{ initial.text }}</textarea>
+          placeholder="{% if qtype == 'true_false' %}Örn: Unutarak yemek yemek orucu bozar.{% elif qtype == 'video' %}Örn: Namaz Vakitleri — Ders 1{% else %}Soruyu buraya yaz…{% endif %}">{{ initial.text }}</textarea>
       </div>
 
-      {% if qtype == 'mcq' %}
+      {% if qtype == 'image' %}
+        <div class="field">
+          <label for="f-image">Görsel {% if has_image %}(değiştirmek istemiyorsan boş bırak){% endif %}</label>
+          {% if has_image %}
+            <img src="/api/media/soru/{{ question.id }}/" alt="Mevcut görsel"
+                 style="max-width:260px;border-radius:12px;display:block;margin-bottom:8px;border:1.5px solid var(--line)">
+          {% endif %}
+          <input type="file" id="f-image" name="image" accept="image/*">
+          <div class="hint">JPG veya PNG, en fazla 2 MB.</div>
+        </div>
+      {% endif %}
+
+      {% if qtype == 'video' %}
+        <div class="field">
+          <label for="f-url">Video bağlantısı</label>
+          <input type="text" id="f-url" name="url" value="{{ initial.url }}" placeholder="https://youtu.be/…">
+          <div class="hint">YouTube linkini yapıştır — öğrenci uygulamadan tek dokunuşla açar.</div>
+        </div>
+      {% endif %}
+
+      {% if qtype == 'mcq' or qtype == 'image' %}
         <div class="field">
           <label>Seçenekler</label>
           {% for row in option_rows %}
@@ -54,6 +75,22 @@
             </label>
           </div>
         </div>
+      {% elif qtype == 'matching' %}
+        <div class="field">
+          <label>Eşleştirme çiftleri</label>
+          <div id="pairs">
+            {% for p in pair_rows %}
+              <div class="pair-row">
+                <input type="text" name="pl" value="{{ p.0 }}" placeholder="Terim">
+                <span class="arrow">⇄</span>
+                <input type="text" name="pr" value="{{ p.1 }}" placeholder="Anlamı">
+                <button type="button" class="rm" title="Çifti sil">✕</button>
+              </div>
+            {% endfor %}
+          </div>
+          <button type="button" class="btn btn-ghost" id="addpair">+ Çift ekle</button>
+          <div class="hint">Uygulamada sağ sütun karışık sırayla gösterilir.</div>
+        </div>
       {% endif %}
 
       <div class="field">
@@ -74,22 +111,39 @@
         <div class="pv-progress"><i></i></div>
         <div class="pv-topbar"><span>✕</span><span>1 / {{ unit.questions.count|default:1 }}</span><span class="pv-xp">☀ 10 XP</span></div>
         <div class="pv-body">
-          <div class="pv-card">
-            <span class="pv-tag">{{ type_label|upper }}</span>
-            <div class="pv-q" id="pv-q">…</div>
-          </div>
-          {% if qtype == 'mcq' %}
-            <div class="pv-opt" data-i="0"><span class="l">A</span><span class="tx">…</span></div>
-            <div class="pv-opt" data-i="1"><span class="l">B</span><span class="tx">…</span></div>
-            <div class="pv-opt" data-i="2"><span class="l">C</span><span class="tx">…</span></div>
-            <div class="pv-opt" data-i="3"><span class="l">D</span><span class="tx">…</span></div>
-            <div class="pv-note">yeşil = doğru cevap (öğrenci görmez)</div>
-          {% elif qtype == 'true_false' %}
-            <div class="pv-tf">
-              <div class="t" id="pv-true">✓ Doğru</div>
-              <div class="f" id="pv-false">✗ Yanlış</div>
+          {% if qtype == 'video' %}
+            <div class="pv-video"><div class="play">▶</div></div>
+            <div style="font-weight:700;font-size:12px" id="pv-q">…</div>
+            <div class="pv-note" id="pv-url">bağlantı eklenmedi</div>
+          {% else %}
+            <div class="pv-card">
+              <span class="pv-tag">{{ type_label|upper }}</span>
+              <div class="pv-q" id="pv-q">…</div>
             </div>
-            <div class="pv-note">çerçeveli = doğru cevap (öğrenci görmez)</div>
+            {% if qtype == 'image' %}
+              <div class="pv-img">
+                <img id="pv-image" alt=""
+                  {% if has_image %}src="/api/media/soru/{{ question.id }}/"{% endif %}
+                  style="width:100%;height:100%;object-fit:cover;{% if not has_image %}display:none{% endif %}">
+                <span id="pv-noimg" style="color:#B5AFA6;font-size:11px;{% if has_image %}display:none{% endif %}">görsel eklenmedi</span>
+              </div>
+            {% endif %}
+            {% if qtype == 'mcq' or qtype == 'image' %}
+              <div class="pv-opt" data-i="0"><span class="l">A</span><span class="tx">…</span></div>
+              <div class="pv-opt" data-i="1"><span class="l">B</span><span class="tx">…</span></div>
+              <div class="pv-opt" data-i="2"><span class="l">C</span><span class="tx">…</span></div>
+              <div class="pv-opt" data-i="3"><span class="l">D</span><span class="tx">…</span></div>
+              <div class="pv-note">yeşil = doğru cevap (öğrenci görmez)</div>
+            {% elif qtype == 'true_false' %}
+              <div class="pv-tf">
+                <div class="t" id="pv-true">✓ Doğru</div>
+                <div class="f" id="pv-false">✗ Yanlış</div>
+              </div>
+              <div class="pv-note">çerçeveli = doğru cevap (öğrenci görmez)</div>
+            {% elif qtype == 'matching' %}
+              <div class="pv-pair" id="pv-pairs"></div>
+              <div class="pv-note">uygulamada sağ sütun karışık gösterilir</div>
+            {% endif %}
           {% endif %}
         </div>
       </div></div>
@@ -102,6 +156,12 @@
 (function () {
   var form = document.getElementById('qform');
   var pvQ = document.getElementById('pv-q');
+
+  function esc(s) {
+    return s.replace(/[&<>"']/g, function (c) {
+      return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c];
+    });
+  }
 
   function refresh() {
     var text = form.querySelector('[name=text]').value.trim();
@@ -124,6 +184,65 @@
       pvTrue.classList.toggle('picked', !!c && c.value === 'Doğru');
       document.getElementById('pv-false').classList.toggle('picked', !!c && c.value === 'Yanlış');
     }
+
+    var pvPairs = document.getElementById('pv-pairs');
+    if (pvPairs) {
+      var lefts = form.querySelectorAll('input[name=pl]');
+      var rights = form.querySelectorAll('input[name=pr]');
+      var html = '';
+      for (var i = 0; i < lefts.length; i++) {
+        var l = lefts[i].value.trim(), r = rights[i].value.trim();
+        if (l || r) {
+          html += '<div>' + esc(l || '…') + '</div><div class="r">' + esc(r || '…') + '</div>';
+        }
+      }
+      pvPairs.innerHTML = html || '<div>…</div><div class="r">…</div>';
+    }
+
+    var pvUrl = document.getElementById('pv-url');
+    if (pvUrl) {
+      var u = form.querySelector('[name=url]').value.trim();
+      pvUrl.textContent = u || 'bağlantı eklenmedi';
+    }
+  }
+
+  var fileInput = document.getElementById('f-image');
+  if (fileInput) {
+    fileInput.addEventListener('change', function () {
+      var img = document.getElementById('pv-image');
+      var noimg = document.getElementById('pv-noimg');
+      if (fileInput.files && fileInput.files[0]) {
+        var reader = new FileReader();
+        reader.onload = function (e) {
+          img.src = e.target.result;
+          img.style.display = '';
+          noimg.style.display = 'none';
+        };
+        reader.readAsDataURL(fileInput.files[0]);
+      }
+    });
+  }
+
+  var pairsBox = document.getElementById('pairs');
+  if (pairsBox) {
+    document.getElementById('addpair').addEventListener('click', function () {
+      var row = pairsBox.querySelector('.pair-row').cloneNode(true);
+      row.querySelectorAll('input').forEach(function (i) { i.value = ''; });
+      pairsBox.appendChild(row);
+      bindRemove();
+      refresh();
+    });
+    function bindRemove() {
+      pairsBox.querySelectorAll('.rm').forEach(function (b) {
+        b.onclick = function () {
+          if (pairsBox.querySelectorAll('.pair-row').length > 1) {
+            b.closest('.pair-row').remove();
+            refresh();
+          }
+        };
+      });
+    }
+    bindRemove();
   }
 
   form.addEventListener('input', refresh);

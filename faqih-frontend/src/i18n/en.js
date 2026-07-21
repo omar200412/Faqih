@@ -22,6 +22,11 @@ export default {
   quiz: {
     typeMultiple:   'Multiple Choice',
     typeHotspot:    'Diagram',
+    typeMatching:   'Matching',
+    typeVideo:      'Video Lesson',
+    typeImage:      'Picture Question',
+    watchVideo:     'Watch Video  ▶',
+    matchingHint:   'Pick a term on the left, then its match on the right',
     correct:        '✓  Correct!',
     wrong:          '✗  Wrong!',
     continue:       'Continue  →',

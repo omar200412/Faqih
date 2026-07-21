@@ -56,6 +56,9 @@ class Question(models.Model):
     )
     correct_option = models.CharField(max_length=200, verbose_name='Doğru Cevap')
     explanation    = models.TextField(blank=True, verbose_name='Açıklama')
+    # Resimli sorular için görsel veritabanında saklanır (Render diski kalıcı değil)
+    image_data     = models.BinaryField(null=True, blank=True, editable=False)
+    image_mime     = models.CharField(max_length=50, blank=True, default='')
 
     class Meta:
         verbose_name        = 'Soru'

@@ -9,6 +9,7 @@ class QuestionSerializer(serializers.ModelSerializer):
     question_type = serializers.SerializerMethodField()
     options = serializers.SerializerMethodField()
     correct_option = serializers.SerializerMethodField()
+    image = serializers.SerializerMethodField()
 
     class Meta:
         model = Question
@@ -19,7 +20,15 @@ class QuestionSerializer(serializers.ModelSerializer):
             'options',
             'correct_option',
             'explanation',
+            'image',
         ]
+
+    def get_image(self, obj):
+        if not obj.image_data:
+            return None
+        url = '/api/media/soru/%d/' % obj.pk
+        request = self.context.get('request')
+        return request.build_absolute_uri(url) if request else url
 
     def _parsed_options(self, obj):
         try:

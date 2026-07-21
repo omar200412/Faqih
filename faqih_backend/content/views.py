@@ -1,8 +1,22 @@
 # content/views.py
 
+from django.http import Http404, HttpResponse
 from rest_framework import viewsets
 from .models import Category, Unit, Question
 from .serializers import CategorySerializer, UnitSerializer, QuestionSerializer
+
+
+def question_image(request, pk):
+    """Veritabanında saklanan soru görselini servis eder."""
+    try:
+        q = Question.objects.get(pk=pk)
+    except Question.DoesNotExist:
+        raise Http404
+    if not q.image_data:
+        raise Http404
+    response = HttpResponse(bytes(q.image_data), content_type=q.image_mime or 'image/jpeg')
+    response['Cache-Control'] = 'public, max-age=86400'
+    return response
 
 class CategoryViewSet(viewsets.ReadOnlyModelViewSet):
     """

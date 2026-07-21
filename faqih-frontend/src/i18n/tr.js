@@ -22,6 +22,11 @@ export default {
   quiz: {
     typeMultiple:   'Çoktan Seçmeli',
     typeHotspot:    'Harita',
+    typeMatching:   'Eşleştirme',
+    typeVideo:      'Video Ders',
+    typeImage:      'Resimli Soru',
+    watchVideo:     'Videoyu İzle  ▶',
+    matchingHint:   'Soldan bir terim, sağdan karşılığını seç',
     correct:        '✓  Doğru!',
     wrong:          '✗  Yanlış!',
     continue:       'Devam Et  →',
