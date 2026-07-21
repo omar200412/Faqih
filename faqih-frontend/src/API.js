@@ -4,7 +4,7 @@ import axios from 'axios';
 
 // ── Change this to your machine's local IP when running backend locally ──────
 // e.g. 'http://192.168.1.42:8000'  (do NOT use localhost on a real device)
-const BASE_URL = 'https://faqih-production.up.railway.app';
+const BASE_URL = 'https://faqih.onrender.com';
 
 const client = axios.create({
   baseURL: BASE_URL,
@@ -26,7 +26,7 @@ export async function getCategories() {
 
 export async function getUnit(id) {
   try {
-    const res = await client.get(`/api/unit/${id}/`);
+    const res = await client.get(`/api/units/${id}/`);
     return res.data;
   } catch {
     console.warn('API unavailable — using mock data');

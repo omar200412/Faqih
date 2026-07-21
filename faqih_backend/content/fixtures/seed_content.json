@@ -1,0 +1,88 @@
+[
+  {
+    "model": "content.category",
+    "pk": 3,
+    "fields": {
+      "title": "İbadetler (Fıkıh)"
+    }
+  },
+  {
+    "model": "content.category",
+    "pk": 4,
+    "fields": {
+      "title": "İnanç (Akaid)"
+    }
+  },
+  {
+    "model": "content.unit",
+    "pk": 4,
+    "fields": {
+      "category": 3,
+      "title": "Temizlik ve Abdest"
+    }
+  },
+  {
+    "model": "content.unit",
+    "pk": 5,
+    "fields": {
+      "category": 3,
+      "title": "Namaz Kılavuzu"
+    }
+  },
+  {
+    "model": "content.unit",
+    "pk": 6,
+    "fields": {
+      "category": 4,
+      "title": "İmanın Şartları"
+    }
+  },
+  {
+    "model": "content.question",
+    "pk": 4,
+    "fields": {
+      "unit": 4,
+      "question_type": "multiple_choice",
+      "text": "Aşağıdakilerden hangisi abdestin farzlarından biri değildir?",
+      "options_json": "[{\"id\": \"A\", \"text\": \"Yüzü yıkamak\"}, {\"id\": \"B\", \"text\": \"Başın dörtte birini mesh etmek\"}, {\"id\": \"C\", \"text\": \"Ayakları topuklarla beraber yıkamak\"}, {\"id\": \"D\", \"text\": \"Niyet etmek\"}]",
+      "correct_option": "D",
+      "explanation": "Maide Suresi 6. Ayete göre abdestin farzları 4'tür: Yüzü yıkamak, elleri dirseklerle beraber yıkamak, başın dörtte birini mesh etmek ve ayakları topuklarla beraber yıkamak. Niyet etmek Hanefi mezhebine göre sünnettir."
+    }
+  },
+  {
+    "model": "content.question",
+    "pk": 5,
+    "fields": {
+      "unit": 4,
+      "question_type": "hotspot",
+      "text": "Görseldeki insan figüründe, abdest alırken yıkanması FARZ olan bölgeyi seçiniz (Yüz bölgesi).",
+      "options_json": "{\"hotspots\": [{\"id\": \"YUZ\", \"style\": {\"top\": \"5%\", \"left\": \"40%\", \"width\": \"20%\", \"height\": \"15%\"}}, {\"id\": \"GOGUS\", \"style\": {\"top\": \"25%\", \"left\": \"30%\", \"width\": \"40%\", \"height\": \"25%\"}}, {\"id\": \"DIZ\", \"style\": {\"top\": \"60%\", \"left\": \"35%\", \"width\": \"30%\", \"height\": \"20%\"}}]}",
+      "correct_option": "YUZ",
+      "explanation": "Kur'an'da 'Yüzlerinizi yıkayın' emri gereği yüzü yıkamak abdestin kesin bir farzıdır."
+    }
+  },
+  {
+    "model": "content.question",
+    "pk": 6,
+    "fields": {
+      "unit": 5,
+      "question_type": "multiple_choice",
+      "text": "Namazda ayakta durmaya ne ad verilir?",
+      "options_json": "[{\"id\": \"A\", \"text\": \"Rükû\"}, {\"id\": \"B\", \"text\": \"Kıyam\"}, {\"id\": \"C\", \"text\": \"Secde\"}, {\"id\": \"D\", \"text\": \"Kıraat\"}]",
+      "correct_option": "B",
+      "explanation": "Kıyam, namazda ayakta durmak demektir ve namazın içindeki farzlardandır."
+    }
+  },
+  {
+    "model": "content.question",
+    "pk": 7,
+    "fields": {
+      "unit": 6,
+      "question_type": "multiple_choice",
+      "text": "Allah'ın zati sıfatlarından olan 'Kıdem' ne anlama gelmektedir?",
+      "options_json": "[{\"id\": \"A\", \"text\": \"Varlığının başlangıcı olmaması (Ezelî)\"}, {\"id\": \"B\", \"text\": \"Varlığının sonu olmaması (Ebedî)\"}, {\"id\": \"C\", \"text\": \"Sonradan olanlara benzememesi\"}, {\"id\": \"D\", \"text\": \"Hiçbir şeye muhtaç olmaması\"}]",
+      "correct_option": "A",
+      "explanation": "Kıdem, Allah'ın varlığının bir başlangıcı olmaması, ezelî olması demektir."
+    }
+  }
+]
