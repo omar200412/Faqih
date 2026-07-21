@@ -8,6 +8,9 @@ from django.views.static import serve
 urlpatterns = [
     path('admin/', admin.site.urls),
 
+    # Arkadaş dostu içerik paneli
+    path('panel/', include('panel.urls')),
+
     # API Linkleri
     path('api/', include('content.urls')),
 ]

@@ -1,0 +1,30 @@
+{% extends "panel/base.html" %}
+
+{% block title %}Yeni soru — {{ unit.title }} — Faqih İçerik Paneli{% endblock %}
+
+{% block main %}
+  <div class="crumb">{{ unit.category.title }} → {{ unit.title }}</div>
+  <div class="main-head">
+    <div>
+      <h1>Soru türü seç</h1>
+      <div class="sub">Nasıl bir soru eklemek istiyorsun?</div>
+    </div>
+    <a class="btn btn-ghost" href="{% url 'panel:unit' unit.id %}">‹ Geri</a>
+  </div>
+  <div class="type-grid">
+    {% for t in enabled_types %}
+      <a class="type-card" style="--tc: var(--t-{{ t.key }})" href="{% url 'panel:question_new' unit.id t.key %}">
+        <span class="g">{{ t.glyph }}</span>
+        <span class="tl">{{ t.label }}</span>
+        <span class="d">{{ t.desc }}</span>
+      </a>
+    {% endfor %}
+    {% for t in coming_types %}
+      <div class="type-card off" style="--tc: var(--muted)">
+        <span class="g">{{ t.glyph }}</span>
+        <span class="tl">{{ t.label }}</span>
+        <span class="d">{{ t.desc }}</span>
+      </div>
+    {% endfor %}
+  </div>
+{% endblock %}

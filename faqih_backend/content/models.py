@@ -32,8 +32,12 @@ class Unit(models.Model):
 
 
 QUESTION_TYPES = [
-    ('mcq',     'Çoktan Seçmeli'),
-    ('hotspot', 'Hotspot (Resim Üzeri)'),
+    ('mcq',        'Çoktan Seçmeli'),
+    ('true_false', 'Doğru / Yanlış'),
+    ('matching',   'Eşleştirme'),
+    ('image',      'Resimli Soru'),
+    ('video',      'Video Ders'),
+    ('hotspot',    'Hotspot (Resim Üzeri)'),
 ]
 
 class Question(models.Model):

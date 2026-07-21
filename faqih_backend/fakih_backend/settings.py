@@ -44,6 +44,7 @@ INSTALLED_APPS = [
     'rest_framework', # API yapısı için
     'corsheaders',    # Tarayıcıdan (web) API erişimi için
     'content',        # Bizim oluşturduğumuz app
+    'panel',          # Arkadaş dostu içerik paneli
 ]
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',

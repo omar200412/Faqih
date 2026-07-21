@@ -1,0 +1,42 @@
+{% extends "panel/base.html" %}
+
+{% block title %}{% if unit %}{{ unit.title }} — Faqih İçerik Paneli{% else %}Faqih İçerik Paneli{% endif %}{% endblock %}
+
+{% block main %}
+  {% if unit %}
+    <div class="crumb">{{ unit.category.title }} → {{ unit.title }}</div>
+    <div class="main-head">
+      <div>
+        <h1>{{ unit.title }}</h1>
+        <div class="sub">{{ rows|length }} soru</div>
+      </div>
+      <a class="btn btn-gold" href="{% url 'panel:type_picker' unit.id %}">+ Yeni Soru</a>
+    </div>
+    <div class="qlist">
+      {% for r in rows %}
+        <div class="qrow">
+          <span class="chip" style="--tc: var(--t-{{ r.qtype }}, var(--muted))">{{ r.type_label }}</span>
+          <div class="qtext">
+            <div class="t">{{ r.obj.text }}</div>
+            <div class="a">{{ r.hint }}</div>
+          </div>
+          <div class="qacts">
+            {% if r.editable %}
+              <a href="{% url 'panel:question_edit' r.obj.id %}">Düzenle</a>
+            {% endif %}
+            <form method="post" action="{% url 'panel:question_delete' r.obj.id %}"
+                  onsubmit="return confirm('Bu soru silinsin mi?');">
+              {% csrf_token %}
+              <button type="submit">Sil</button>
+            </form>
+          </div>
+        </div>
+      {% empty %}
+        <div class="empty">Bu ünitede henüz soru yok.<br>“+ Yeni Soru” ile ilk içeriği ekle.</div>
+      {% endfor %}
+    </div>
+  {% else %}
+    <div class="main-head"><h1>Hoş geldin 👋</h1></div>
+    <div class="empty">Henüz hiç içerik yok.<br>Soldaki menüden bir kategori ekleyerek başla.</div>
+  {% endif %}
+{% endblock %}

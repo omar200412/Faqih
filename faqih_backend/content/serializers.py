@@ -28,8 +28,9 @@ class QuestionSerializer(serializers.ModelSerializer):
             return None
 
     def get_question_type(self, obj):
-        # Eski kayıtlarda 'multiple_choice' kullanılmış; uygulama 'mcq' bekliyor
-        if obj.question_type == 'multiple_choice':
+        # Eski kayıtlarda 'multiple_choice' kullanılmış; uygulama 'mcq' bekliyor.
+        # Doğru/Yanlış da uygulamada iki seçenekli mcq olarak gösterilir.
+        if obj.question_type in ('multiple_choice', 'true_false'):
             return 'mcq'
         return obj.question_type
 
@@ -39,6 +40,8 @@ class QuestionSerializer(serializers.ModelSerializer):
         so the frontend receives a parsed structure, not a string.
         Normalizes legacy formats to what the app expects.
         """
+        if obj.question_type == 'true_false':
+            return ['Doğru', 'Yanlış']
         data = self._parsed_options(obj)
         # Eski format: [{"id": "A", "text": "..."}] → düz metin listesi
         if isinstance(data, list) and data and isinstance(data[0], dict):

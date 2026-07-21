@@ -1,0 +1,134 @@
+{% extends "panel/base.html" %}
+
+{% block title %}{{ type_label }} — Faqih İçerik Paneli{% endblock %}
+
+{% block main %}
+  <div class="crumb">{{ unit.category.title }} → {{ unit.title }}</div>
+  <div class="main-head">
+    <div>
+      <h1>{% if question %}Düzenle{% else %}Yeni{% endif %}: {{ type_label }}</h1>
+    </div>
+    <a class="btn btn-ghost" href="{% url 'panel:unit' unit.id %}">‹ Geri</a>
+  </div>
+
+  <div class="editor">
+    <form class="form" method="post" id="qform">
+      {% csrf_token %}
+      {% if errors %}
+        <div class="errors">{% for e in errors %}<div>{{ e }}</div>{% endfor %}</div>
+      {% endif %}
+
+      <div class="field">
+        <label for="f-text">{% if qtype == 'true_false' %}İfade{% else %}Soru metni{% endif %}</label>
+        <textarea id="f-text" name="text" rows="2" required
+          placeholder="{% if qtype == 'true_false' %}Örn: Unutarak yemek yemek orucu bozar.{% else %}Soruyu buraya yaz…{% endif %}">{{ initial.text }}</textarea>
+      </div>
+
+      {% if qtype == 'mcq' %}
+        <div class="field">
+          <label>Seçenekler</label>
+          {% for row in option_rows %}
+            <div class="opt-row">
+              <span class="letter">{{ row.letter }}</span>
+              <input type="text" name="opt{{ row.i }}" value="{{ row.value }}" placeholder="{{ forloop.counter }}. seçenek">
+              <label title="Doğru cevap olarak işaretle">
+                <input type="radio" name="correct" value="{{ row.i }}"
+                  {% if initial.correct == row.i|stringformat:"s" %}checked{% endif %}>
+                <span class="mark">✓</span>
+              </label>
+            </div>
+          {% endfor %}
+          <div class="hint">✓ ile doğru cevabı işaretle.</div>
+        </div>
+      {% elif qtype == 'true_false' %}
+        <div class="field">
+          <label>Doğru cevap</label>
+          <div class="seg">
+            <label>
+              <input type="radio" name="correct" value="Doğru" {% if initial.correct == 'Doğru' %}checked{% endif %}>
+              <span>✓ Doğru</span>
+            </label>
+            <label>
+              <input type="radio" name="correct" value="Yanlış" {% if initial.correct == 'Yanlış' %}checked{% endif %}>
+              <span>✗ Yanlış</span>
+            </label>
+          </div>
+        </div>
+      {% endif %}
+
+      <div class="field">
+        <label for="f-expl">Açıklama (cevaptan sonra gösterilir — isteğe bağlı)</label>
+        <textarea id="f-expl" name="explanation" rows="2"
+          placeholder="Örn: Hanefi mezhebine göre…">{{ initial.explanation }}</textarea>
+      </div>
+
+      <div class="form-acts">
+        <button class="btn btn-green" type="submit">Kaydet</button>
+        <a class="btn btn-ghost" href="{% url 'panel:unit' unit.id %}">Vazgeç</a>
+      </div>
+    </form>
+
+    <div class="preview">
+      <div class="pv-label">Canlı Önizleme</div>
+      <div class="phone"><div class="screen">
+        <div class="pv-progress"><i></i></div>
+        <div class="pv-topbar"><span>✕</span><span>1 / {{ unit.questions.count|default:1 }}</span><span class="pv-xp">☀ 10 XP</span></div>
+        <div class="pv-body">
+          <div class="pv-card">
+            <span class="pv-tag">{{ type_label|upper }}</span>
+            <div class="pv-q" id="pv-q">…</div>
+          </div>
+          {% if qtype == 'mcq' %}
+            <div class="pv-opt" data-i="0"><span class="l">A</span><span class="tx">…</span></div>
+            <div class="pv-opt" data-i="1"><span class="l">B</span><span class="tx">…</span></div>
+            <div class="pv-opt" data-i="2"><span class="l">C</span><span class="tx">…</span></div>
+            <div class="pv-opt" data-i="3"><span class="l">D</span><span class="tx">…</span></div>
+            <div class="pv-note">yeşil = doğru cevap (öğrenci görmez)</div>
+          {% elif qtype == 'true_false' %}
+            <div class="pv-tf">
+              <div class="t" id="pv-true">✓ Doğru</div>
+              <div class="f" id="pv-false">✗ Yanlış</div>
+            </div>
+            <div class="pv-note">çerçeveli = doğru cevap (öğrenci görmez)</div>
+          {% endif %}
+        </div>
+      </div></div>
+    </div>
+  </div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+(function () {
+  var form = document.getElementById('qform');
+  var pvQ = document.getElementById('pv-q');
+
+  function refresh() {
+    var text = form.querySelector('[name=text]').value.trim();
+    pvQ.textContent = text || '…';
+
+    var opts = form.querySelectorAll('input[name^=opt]');
+    if (opts.length) {
+      var correct = form.querySelector('input[name=correct]:checked');
+      document.querySelectorAll('.pv-opt').forEach(function (row) {
+        var i = row.getAttribute('data-i');
+        var inp = form.querySelector('[name=opt' + i + ']');
+        row.querySelector('.tx').textContent = (inp && inp.value.trim()) || '…';
+        row.classList.toggle('on', !!correct && correct.value === i);
+      });
+    }
+
+    var pvTrue = document.getElementById('pv-true');
+    if (pvTrue) {
+      var c = form.querySelector('input[name=correct]:checked');
+      pvTrue.classList.toggle('picked', !!c && c.value === 'Doğru');
+      document.getElementById('pv-false').classList.toggle('picked', !!c && c.value === 'Yanlış');
+    }
+  }
+
+  form.addEventListener('input', refresh);
+  form.addEventListener('change', refresh);
+  refresh();
+})();
+</script>
+{% endblock %}
