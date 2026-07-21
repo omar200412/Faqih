@@ -42,11 +42,13 @@ INSTALLED_APPS = [
     
     # Eklediğimiz kütüphaneler:
     'rest_framework', # API yapısı için
+    'corsheaders',    # Tarayıcıdan (web) API erişimi için
     'content',        # Bizim oluşturduğumuz app
 ]
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
     'whitenoise.middleware.WhiteNoiseMiddleware',
+    'corsheaders.middleware.CorsMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
     'django.middleware.common.CommonMiddleware',
     'django.middleware.csrf.CsrfViewMiddleware',
@@ -129,4 +131,8 @@ DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 # Admin site customization
 admin_site_header = '🕌 Faqih Admin Paneli'
 
-CSRF_TRUSTED_ORIGINS = ['https://faqih-backend.onrender.com']
+CSRF_TRUSTED_ORIGINS = ['https://faqih.onrender.com']
+
+# API halka açık içerik sunar — tüm origin'lerden okumaya izin ver
+CORS_ALLOW_ALL_ORIGINS = True
+CORS_URLS_REGEX = r'^/api/.*$'
