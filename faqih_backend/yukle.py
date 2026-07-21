@@ -8,19 +8,19 @@ django.setup()
 
 User = get_user_model()
 
-# Yeni Admin Bilgileri (Bunları istediğin gibi değiştir)
-ADMIN_USERNAME = 'admin_omer'
-ADMIN_EMAIL = 'omer@faqih.com'
-ADMIN_PASSWORD = 'faqihpassword123'
+# Admin bilgileri Render'daki Environment Variables'tan gelir — koda şifre yazılmaz
+ADMIN_USERNAME = os.environ.get('ADMIN_USERNAME')
+ADMIN_PASSWORD = os.environ.get('ADMIN_PASSWORD')
+ADMIN_EMAIL = os.environ.get('ADMIN_EMAIL', 'admin@faqih.site')
 
-# Eğer kullanıcı yoksa oluştur
-if not User.objects.filter(username=ADMIN_USERNAME).exists():
+if not ADMIN_USERNAME or not ADMIN_PASSWORD:
+    print("ADMIN_USERNAME / ADMIN_PASSWORD ortam değişkenleri yok — admin oluşturma atlandı.")
+elif not User.objects.filter(username=ADMIN_USERNAME).exists():
     print(f"'{ADMIN_USERNAME}' hesabı oluşturuluyor...")
     User.objects.create_superuser(ADMIN_USERNAME, ADMIN_EMAIL, ADMIN_PASSWORD)
     print("Süper kullanıcı başarıyla oluşturuldu!")
 else:
     print(f"'{ADMIN_USERNAME}' hesabı zaten var. Şifresi güncelleniyor...")
-    # Eğer daha önce oluşturduysa, şifresini sıfırlar
     user = User.objects.get(username=ADMIN_USERNAME)
     user.set_password(ADMIN_PASSWORD)
     user.save()

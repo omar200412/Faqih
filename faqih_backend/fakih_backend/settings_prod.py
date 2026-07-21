@@ -24,11 +24,9 @@ LOGGING = {
 
 # Render'ın domainlerini ekledik
 ALLOWED_HOSTS = [
-    'faqih.onrender.com', # Render'da kuracağımız isme göre bunu güncelleyeceğiz
     '.onrender.com',
     'faqih.site',
     'www.faqih.site',
-    '*'
 ]
 
 # VERİTABANI BAĞLANTISI 
@@ -59,7 +57,6 @@ MIDDLEWARE = [
     'django.middleware.common.CommonMiddleware',
     'django.middleware.csrf.CsrfViewMiddleware',
     'django.contrib.auth.middleware.AuthenticationMiddleware',
-    'fakih_backend.middleware.AutoLoginMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
 ]
