@@ -62,7 +62,7 @@ const xpStyles = StyleSheet.create({
     borderRadius: radius.full,
   },
   label: {
-    textAlign: 'center', fontSize: 9, fontWeight: '700',
+    textAlign: 'center', fontSize: 9, fontFamily: fonts.semibold,
     color: colors.text, letterSpacing: 0.5,
   },
 });
@@ -85,16 +85,16 @@ const statStyles = StyleSheet.create({
     ...shadow.sm,
   },
   icon:  { fontSize: 26, marginBottom: 6 },
-  value: { fontSize: 24, fontWeight: '800', fontFamily: fonts.heading, marginBottom: 2 },
-  label: { fontSize: 11, color: colors.textMuted, fontWeight: '600', letterSpacing: 0.5, textTransform: 'uppercase' },
+  value: { fontSize: 24, fontFamily: fonts.headingXB, marginBottom: 2 },
+  label: { fontSize: 11, color: colors.textMuted, fontFamily: fonts.semibold, letterSpacing: 0.5, textTransform: 'uppercase' },
 });
 
 // ── Category Badge ────────────────────────────────────────────────────────────
 const CATEGORY_STYLES = [
-  { bg: '#1A5C38', text: '#FFFFFF', icon: '🌿' },
-  { bg: '#C9993A', text: '#FFFFFF', icon: '🕌' },
-  { bg: '#2C5F8A', text: '#FFFFFF', icon: '📖' },
-  { bg: '#7B3FA0', text: '#FFFFFF', icon: '✨' },
+  { bg: '#43A047', text: '#FFFFFF', icon: '🌿' },
+  { bg: '#FB8C00', text: '#FFFFFF', icon: '🕌' },
+  { bg: '#1E88E5', text: '#FFFFFF', icon: '📖' },
+  { bg: '#8E24AA', text: '#FFFFFF', icon: '✨' },
 ];
 
 export function getCategoryStyle(index) {
@@ -123,12 +123,12 @@ export function PrimaryButton({ title, onPress, disabled, style }) {
 
 const btnStyles = StyleSheet.create({
   btn: {
-    backgroundColor: colors.primary, borderRadius: radius.lg,
+    backgroundColor: colors.primaryDark, borderRadius: radius.full,
     paddingVertical: 16, alignItems: 'center', justifyContent: 'center',
     ...shadow.md,
   },
   disabled: { backgroundColor: colors.neutral },
-  text: { color: colors.white, fontSize: 17, fontWeight: '800', letterSpacing: 0.3 },
+  text: { color: colors.white, fontSize: 16, fontFamily: fonts.semibold, letterSpacing: 0.2 },
 });
 
 // ── Answer Option Button ──────────────────────────────────────────────────────
@@ -140,10 +140,10 @@ export function OptionButton({ text, state, onPress, index }) {
   const onPressOut = () => Animated.spring(scale, { toValue: 1, useNativeDriver: true }).start();
 
   const stateStyles = {
-    idle:     { bg: colors.card,      border: colors.neutral,   textColor: colors.text,  icon: null },
-    selected: { bg: '#EEF5F1',        border: colors.primary,   textColor: colors.primary, icon: null },
-    correct:  { bg: colors.correctBg, border: colors.correct,   textColor: colors.correct, icon: '✓' },
-    wrong:    { bg: colors.wrongBg,   border: colors.wrong,     textColor: colors.wrong,   icon: '✗' },
+    idle:     { bg: colors.card,       border: colors.neutral,   textColor: colors.text,    icon: null },
+    selected: { bg: colors.primaryPale, border: colors.primary,  textColor: colors.primary, icon: null },
+    correct:  { bg: colors.correctBg,  border: colors.correct,   textColor: colors.correct, icon: '✓' },
+    wrong:    { bg: colors.wrongBg,    border: colors.wrong,     textColor: colors.wrong,   icon: '✗' },
   };
 
   const s = stateStyles[state] || stateStyles.idle;
@@ -171,14 +171,14 @@ export function OptionButton({ text, state, onPress, index }) {
 const optStyles = StyleSheet.create({
   btn: {
     flexDirection: 'row', alignItems: 'center',
-    borderRadius: radius.md, borderWidth: 2,
+    borderRadius: radius.lg, borderWidth: 2,
     paddingVertical: 14, paddingHorizontal: 16,
     marginBottom: 10, ...shadow.sm,
   },
   letter: {
-    width: 32, height: 32, borderRadius: 8,
+    width: 32, height: 32, borderRadius: radius.full,
     alignItems: 'center', justifyContent: 'center', marginRight: 12,
   },
-  letterText: { fontSize: 13, fontWeight: '800' },
-  text: { fontSize: 15, fontWeight: '600', flex: 1, lineHeight: 20 },
+  letterText: { fontSize: 13, fontFamily: fonts.semibold },
+  text: { fontSize: 15, fontFamily: fonts.medium, flex: 1, lineHeight: 20 },
 });
