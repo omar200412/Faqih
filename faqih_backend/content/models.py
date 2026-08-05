@@ -31,6 +31,39 @@ class Unit(models.Model):
         return f'{self.category.title} → {self.title}'
 
 
+LESSON_INTRO_KINDS = [
+    ('none',  'Yok'),
+    ('text',  'Metin'),
+    ('image', 'Görsel'),
+    ('video', 'Video'),
+]
+
+
+class Lesson(models.Model):
+    unit             = models.ForeignKey(
+        Unit, on_delete=models.CASCADE,
+        related_name='lessons', verbose_name='Ünite'
+    )
+    title            = models.CharField(max_length=200, verbose_name='Ders Adı')
+    intro_kind       = models.CharField(
+        max_length=10, choices=LESSON_INTRO_KINDS,
+        default='none', verbose_name='Giriş Türü'
+    )
+    intro_text       = models.TextField(blank=True, verbose_name='Giriş Metni')
+    intro_video_url  = models.URLField(blank=True, verbose_name='Giriş Videosu')
+    # Görsel girişler veritabanında saklanır (Render diski kalıcı değil) — Exercise.image_data ile aynı desen.
+    intro_image_data = models.BinaryField(null=True, blank=True, editable=False)
+    intro_image_mime = models.CharField(max_length=50, blank=True, default='')
+
+    class Meta:
+        verbose_name        = 'Ders'
+        verbose_name_plural = 'Dersler'
+        ordering            = ['id']
+
+    def __str__(self):
+        return f'{self.unit.title} → {self.title}'
+
+
 QUESTION_TYPES = [
     ('mcq',        'Çoktan Seçmeli'),
     ('true_false', 'Doğru / Yanlış'),
@@ -44,6 +77,10 @@ class Question(models.Model):
     unit          = models.ForeignKey(
         Unit, on_delete=models.CASCADE,
         related_name='questions', verbose_name='Ünite'
+    )
+    lesson        = models.ForeignKey(
+        Lesson, on_delete=models.CASCADE, null=True, blank=True,
+        related_name='questions', verbose_name='Ders'
     )
     question_type = models.CharField(
         max_length=20, choices=QUESTION_TYPES,
