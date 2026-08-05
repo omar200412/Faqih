@@ -1,19 +1,19 @@
 {% extends "panel/base.html" %}
 
-{% block title %}Yeni soru — {{ unit.title }} — Faqih İçerik Paneli{% endblock %}
+{% block title %}Yeni soru — {{ lesson.title }} — Faqih İçerik Paneli{% endblock %}
 
 {% block main %}
-  <div class="crumb">{{ unit.category.title }} → {{ unit.title }}</div>
+  <div class="crumb">{{ unit.category.title }} → {{ unit.title }} → {{ lesson.title }}</div>
   <div class="main-head">
     <div>
       <h1>Soru türü seç</h1>
       <div class="sub">Nasıl bir soru eklemek istiyorsun?</div>
     </div>
-    <a class="btn btn-ghost" href="{% url 'panel:unit' unit.id %}">‹ Geri</a>
+    <a class="btn btn-ghost" href="{% url 'panel:lesson' lesson.id %}">‹ Geri</a>
   </div>
   <div class="type-grid">
     {% for t in enabled_types %}
-      <a class="type-card" style="--tc: var(--t-{{ t.key }})" href="{% url 'panel:question_new' unit.id t.key %}">
+      <a class="type-card" style="--tc: var(--t-{{ t.key }})" href="{% url 'panel:question_new' lesson.id t.key %}">
         <span class="g">{{ t.glyph }}</span>
         <span class="tl">{{ t.label }}</span>
         <span class="d">{{ t.desc }}</span>

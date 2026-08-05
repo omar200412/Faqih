@@ -6,7 +6,7 @@ import { createStackNavigator } from '@react-navigation/stack';
 
 import { LanguageProvider, useLang } from './src/i18n';
 import HomeScreen    from './src/screens/HomeScreen';
-import QuizScreen    from './src/screens/QuizScreen';
+import LessonScreen  from './src/screens/LessonScreen';
 import ProfileScreen from './src/screens/ProfileScreen';
 import { colors }    from './src/theme';
 
@@ -25,7 +25,7 @@ function AppNavigator() {
         }}
       >
         <Stack.Screen name="Home"    component={HomeScreen}    options={{ headerShown: false }} />
-        <Stack.Screen name="Quiz"    component={QuizScreen}    options={{ headerShown: false }} />
+        <Stack.Screen name="Lesson"  component={LessonScreen}  options={{ headerShown: false }} />
         <Stack.Screen name="Profile" component={ProfileScreen} options={{ title: t.profile.title }} />
       </Stack.Navigator>
     </NavigationContainer>
