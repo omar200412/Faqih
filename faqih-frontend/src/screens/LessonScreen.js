@@ -220,8 +220,12 @@ export default function LessonScreen({ route, navigation }) {
 
   // Results
   if (state === STATE.RESULTS) {
-    const total    = lesson.exercises.length;
-    const pct      = Math.round(((total - mistakes.length) / total) * 100);
+    const total = lesson.exercises.length;
+    // An exercise can be missed more than once before it's finally answered
+    // correctly, so accuracy is based on how many *distinct* exercises had
+    // at least one mistake, not the raw mistake count.
+    const missedExerciseCount = new Set(mistakes.map(m => m.question.id)).size;
+    const pct      = Math.round(((total - missedExerciseCount) / total) * 100);
     const isPerfect = mistakes.length === 0;
     return (
       <SafeAreaView style={styles.safe}>
@@ -292,6 +296,12 @@ export default function LessonScreen({ route, navigation }) {
             question.options.map((opt, i) => (
               <OptionButton key={i} index={i} text={opt}
                 state={getOptionState(opt)} onPress={() => handleAnswer(opt)} />
+            ))
+          }
+          {question.question_type === 'hotspot' && question.options?.hotspots &&
+            question.options.hotspots.map((hs, i) => (
+              <OptionButton key={hs.id} index={i} text={hs.text}
+                state={getOptionState(hs.id)} onPress={() => handleAnswer(hs.id)} />
             ))
           }
           {question.question_type === 'ordering' && (
