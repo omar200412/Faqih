@@ -64,43 +64,45 @@ class Lesson(models.Model):
         return f'{self.unit.title} → {self.title}'
 
 
-QUESTION_TYPES = [
+EXERCISE_TYPES = [
     ('mcq',        'Çoktan Seçmeli'),
     ('true_false', 'Doğru / Yanlış'),
     ('matching',   'Eşleştirme'),
     ('image',      'Resimli Soru'),
     ('video',      'Video Ders'),
+    ('ordering',   'Sıralama'),
+    ('fill_blank', 'Boşluk Doldurma'),
     ('hotspot',    'Hotspot (Resim Üzeri)'),
 ]
 
-class Question(models.Model):
-    unit          = models.ForeignKey(
-        Unit, on_delete=models.CASCADE,
-        related_name='questions', verbose_name='Ünite'
-    )
+class Exercise(models.Model):
     lesson        = models.ForeignKey(
-        Lesson, on_delete=models.CASCADE, null=True, blank=True,
-        related_name='questions', verbose_name='Ders'
+        Lesson, on_delete=models.CASCADE,
+        related_name='exercises', verbose_name='Ders'
     )
     question_type = models.CharField(
-        max_length=20, choices=QUESTION_TYPES,
+        max_length=20, choices=EXERCISE_TYPES,
         default='mcq', verbose_name='Soru Türü'
     )
     text          = models.TextField(verbose_name='Soru Metni')
     options_json  = models.TextField(
         verbose_name='Seçenekler (JSON)',
-        help_text='MCQ: ["A", "B", "C", "D"]  |  Hotspot: {"background_image": "...", "hotspots": [...]}'
+        help_text=(
+            'MCQ: ["A", "B", "C", "D"]  |  Hotspot: {"background_image": "...", "hotspots": [...]}  |  '
+            'Sıralama: {"steps": ["1. adım", "2. adım", ...]} (doğru sırada yazılır)  |  '
+            'Boşluk Doldurma: {"sentence": "Abdestin ___ farzı vardır.", "word_bank": ["dört", "beş", "altı"]}'
+        )
     )
-    correct_option = models.CharField(max_length=200, verbose_name='Doğru Cevap')
+    correct_answer = models.CharField(max_length=200, blank=True, verbose_name='Doğru Cevap')
     explanation    = models.TextField(blank=True, verbose_name='Açıklama')
     # Resimli sorular için görsel veritabanında saklanır (Render diski kalıcı değil)
     image_data     = models.BinaryField(null=True, blank=True, editable=False)
     image_mime     = models.CharField(max_length=50, blank=True, default='')
 
     class Meta:
-        verbose_name        = 'Soru'
-        verbose_name_plural = 'Sorular'
+        verbose_name        = 'Alıştırma'
+        verbose_name_plural = 'Alıştırmalar'
         ordering            = ['id']
 
     def __str__(self):
-        return f'[{self.unit.title}] {self.text[:50]}'
+        return f'[{self.lesson.title}] {self.text[:50]}'
