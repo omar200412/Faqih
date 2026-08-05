@@ -6,6 +6,7 @@ from .models import Category, Unit, Lesson, Exercise
 
 
 class ExerciseSerializer(serializers.ModelSerializer):
+    question_type = serializers.SerializerMethodField()
     options = serializers.SerializerMethodField()
     correct_answer = serializers.SerializerMethodField()
     image = serializers.SerializerMethodField()
@@ -28,6 +29,13 @@ class ExerciseSerializer(serializers.ModelSerializer):
         url = '/api/media/soru/%d/' % obj.pk
         request = self.context.get('request')
         return request.build_absolute_uri(url) if request else url
+
+    def get_question_type(self, obj):
+        # Eski kayıtlarda 'multiple_choice' kullanılmış; uygulama 'mcq' bekliyor.
+        # Doğru/Yanlış da uygulamada iki seçenekli mcq olarak gösterilir.
+        if obj.question_type in ('multiple_choice', 'true_false'):
+            return 'mcq'
+        return obj.question_type
 
     def _parsed_options(self, obj):
         try:

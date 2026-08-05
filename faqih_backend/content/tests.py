@@ -67,6 +67,28 @@ class ExerciseModelTests(TestCase):
         self.assertIn(('ordering', 'Sıralama'), EXERCISE_TYPES)
         self.assertIn(('fill_blank', 'Boşluk Doldurma'), EXERCISE_TYPES)
 
+    def test_legacy_multiple_choice_and_true_false_are_normalized_to_mcq_on_the_wire(self):
+        from .models import Exercise
+        from .serializers import ExerciseSerializer
+
+        category = Category.objects.create(title='Namaz')
+        unit = Unit.objects.create(category=category, title='Namaz Vakitleri')
+        lesson = Lesson.objects.create(unit=unit, title='Kıyam')
+
+        legacy_mcq = Exercise.objects.create(
+            lesson=lesson, question_type='multiple_choice',
+            text='Ayakta durmaya ne ad verilir?',
+            options_json='["Rükû", "Kıyam"]', correct_answer='Kıyam',
+        )
+        legacy_tf = Exercise.objects.create(
+            lesson=lesson, question_type='true_false',
+            text='Kıyam ayakta durmaktır.',
+            options_json='["Doğru", "Yanlış"]', correct_answer='Doğru',
+        )
+
+        self.assertEqual(ExerciseSerializer(legacy_mcq).data['question_type'], 'mcq')
+        self.assertEqual(ExerciseSerializer(legacy_tf).data['question_type'], 'mcq')
+
 
 class SerializerNestingTests(TestCase):
     def setUp(self):
