@@ -34,6 +34,16 @@ export async function getUnit(id) {
   }
 }
 
+export async function getLesson(id) {
+  try {
+    const res = await client.get(`/api/lessons/${id}/`);
+    return res.data;
+  } catch {
+    console.warn('API unavailable — using mock data');
+    return MOCK_LESSONS[id] ?? null;
+  }
+}
+
 // ── Mock data (used when backend is not running) ──────────────────────────────
 
 const MOCK_CATEGORIES = [
@@ -41,24 +51,15 @@ const MOCK_CATEGORIES = [
     id: 1,
     title: 'Temizlik',
     units: [
-      { id: 1, title: 'Abdest', question_count: 5 },
-      { id: 2, title: 'Gusül', question_count: 4 },
-      { id: 3, title: 'Teyemmüm', question_count: 3 },
+      { id: 1, title: 'Abdest', lesson_count: 2 },
+      { id: 2, title: 'Gusül', lesson_count: 1 },
     ],
   },
   {
     id: 2,
     title: 'Namaz',
     units: [
-      { id: 4, title: 'Namaz Vakitleri', question_count: 5 },
-      { id: 5, title: 'Namazın Farzları', question_count: 6 },
-    ],
-  },
-  {
-    id: 3,
-    title: 'Oruç',
-    units: [
-      { id: 6, title: 'Ramazan Orucu', question_count: 4 },
+      { id: 4, title: 'Namaz Vakitleri', lesson_count: 1 },
     ],
   },
 ];
@@ -67,76 +68,45 @@ const MOCK_UNITS = {
   1: {
     id: 1,
     title: 'Abdest',
-    questions: [
+    lessons: [
+      { id: 1, title: 'Abdestin Farzları', has_intro: true, exercise_count: 3 },
+      { id: 2, title: 'Abdesti Bozan Şeyler', has_intro: false, exercise_count: 2 },
+    ],
+  },
+};
+
+const MOCK_LESSONS = {
+  1: {
+    id: 1,
+    title: 'Abdestin Farzları',
+    intro: {
+      kind: 'text',
+      body: 'Abdest, namazdan önce yapılan bir temizlenme ibadetidir. Hanefi mezhebine göre 4 farzı vardır.',
+    },
+    exercises: [
       {
         id: 1,
         question_type: 'mcq',
         text: 'Abdestin kaç farzı vardır?',
         options: ['2', '4', '6', '8'],
-        correct_option: '4',
+        correct_answer: '4',
         explanation: 'Hanefi mezhebine göre abdestin 4 farzı vardır: Yüzü yıkamak, kolları yıkamak, başı meshetmek ve ayakları yıkamak.',
       },
       {
         id: 2,
-        question_type: 'mcq',
-        text: 'Aşağıdakilerden hangisi abdestin farzlarından biri DEĞİLDİR?',
-        options: ['Yüzü yıkamak', 'Boynu meshetmek', 'Kolları yıkamak', 'Ayakları yıkamak'],
-        correct_option: 'Boynu meshetmek',
-        explanation: 'Boynu meshetmek sünnet, başı meshetmek ise farzdır.',
+        question_type: 'ordering',
+        text: 'Abdest adımlarını doğru sıraya diz.',
+        options: { steps: ['Niyet et', 'Elleri yıka', 'Ağzı çalkala', 'Yüzü yıka'] },
+        correct_answer: '',
+        explanation: 'Abdest bu sırayla alınır.',
       },
       {
         id: 3,
-        question_type: 'mcq',
-        text: 'Abdestte kollar ne kadar yıkanır?',
-        options: ['Bileklere kadar', 'Dirseklere kadar', 'Omuzlara kadar', 'Parmaklara kadar'],
-        correct_option: 'Dirseklere kadar',
+        question_type: 'fill_blank',
+        text: 'Boşluğu doldur.',
+        options: { sentence: 'Abdestte kollar ___ kadar yıkanır.', word_bank: ['bileklere', 'dirseklere', 'omuzlara'] },
+        correct_answer: 'dirseklere',
         explanation: 'Kollar dirsekler dahil dirseklere kadar yıkanmalıdır.',
-      },
-      {
-        id: 4,
-        question_type: 'mcq',
-        text: 'Abdest almayı engelleyen hadestlerden biri hangisidir?',
-        options: ['Uyku', 'Yemek yemek', 'Dua etmek', 'Namaz kılmak'],
-        correct_option: 'Uyku',
-        explanation: 'Derin uyku abdesti bozar çünkü bilinç ortadan kalkar.',
-      },
-      {
-        id: 5,
-        question_type: 'mcq',
-        text: 'Misvak kullanmak abdestin hangi türü kapsamındadır?',
-        options: ['Farz', 'Sünnet', 'Vacip', 'Mekruh'],
-        correct_option: 'Sünnet',
-        explanation: 'Misvak veya diş fırçası kullanmak abdestin sünnetlerindendir.',
-      },
-    ],
-  },
-  4: {
-    id: 4,
-    title: 'Namaz Vakitleri',
-    questions: [
-      {
-        id: 10,
-        question_type: 'mcq',
-        text: 'Günde kaç vakit namaz kılınır?',
-        options: ['3', '4', '5', '6'],
-        correct_option: '5',
-        explanation: 'Günde 5 vakit namaz farz olarak kılınır: Sabah, Öğle, İkindi, Akşam ve Yatsı.',
-      },
-      {
-        id: 11,
-        question_type: 'mcq',
-        text: 'Sabah namazının vakti ne zaman girer?',
-        options: ['Gece yarısı', 'Tan yeri ağarınca', 'Güneş doğunca', 'Öğleden önce'],
-        correct_option: 'Tan yeri ağarınca',
-        explanation: 'Sabah namazının vakti fecr-i sadık (gerçek şafak) ile girer.',
-      },
-      {
-        id: 12,
-        question_type: 'mcq',
-        text: 'Hangi namaz vakti güneşin tam tepede olduğu zamandır?',
-        options: ['Sabah', 'Öğle', 'İkindi', 'Akşam'],
-        correct_option: 'Öğle',
-        explanation: 'Öğle namazı güneşin tepe noktasını geçmesinden sonra kılınır.',
       },
     ],
   },
