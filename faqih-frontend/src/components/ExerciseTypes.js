@@ -6,7 +6,7 @@
 
 import React, { useMemo, useState } from 'react';
 import { View, Text, TouchableOpacity, StyleSheet } from 'react-native';
-import { colors, radius, shadow, spacing } from '../theme';
+import { colors, radius, shadow, spacing, fonts } from '../theme';
 
 function shuffled(items) {
   const arr = items.map((item, i) => ({ item, i }));
@@ -65,15 +65,15 @@ const ordStyles = StyleSheet.create({
     borderWidth: 1.5, borderColor: colors.neutral,
     paddingVertical: 12, paddingHorizontal: 14, minHeight: 48,
   },
-  slotNum: { width: 22, height: 22, borderRadius: 11, backgroundColor: colors.primary, color: colors.white, textAlign: 'center', fontSize: 12, fontWeight: '800', lineHeight: 22 },
-  slotText: { flex: 1, fontSize: 14, fontWeight: '600', color: colors.text },
+  slotNum: { width: 22, height: 22, borderRadius: 11, backgroundColor: colors.primary, color: colors.white, textAlign: 'center', fontSize: 12, fontFamily: fonts.semibold, lineHeight: 22 },
+  slotText: { flex: 1, fontSize: 14, fontFamily: fonts.medium, color: colors.text },
   pool: { flexDirection: 'row', flexWrap: 'wrap', gap: 8 },
   chip: {
     backgroundColor: colors.goldPale, borderRadius: radius.full,
     borderWidth: 1.5, borderColor: colors.goldLight,
     paddingVertical: 10, paddingHorizontal: 16, ...shadow.sm,
   },
-  chipText: { fontSize: 14, fontWeight: '700', color: colors.text },
+  chipText: { fontSize: 14, fontFamily: fonts.semibold, color: colors.text },
 });
 
 // ── Fill in the blank ────────────────────────────────────────────────────────
@@ -113,15 +113,15 @@ export function FillBlankExercise({ sentence, wordBank, onSubmit, disabled }) {
 
 const fbStyles = StyleSheet.create({
   wrap: { gap: 16 },
-  sentence: { fontSize: 17, lineHeight: 26, color: colors.text, fontWeight: '600' },
-  blank: { color: colors.primary, fontWeight: '800', textDecorationLine: 'underline' },
+  sentence: { fontSize: 17, lineHeight: 26, color: colors.text, fontFamily: fonts.medium },
+  blank: { color: colors.primary, fontFamily: fonts.headingXB, textDecorationLine: 'underline' },
   bank: { flexDirection: 'row', flexWrap: 'wrap', gap: 8 },
   chip: {
     backgroundColor: colors.card, borderRadius: radius.full,
     borderWidth: 1.5, borderColor: colors.neutral,
     paddingVertical: 10, paddingHorizontal: 18, ...shadow.sm,
   },
-  chipPicked: { backgroundColor: '#EEF5F1', borderColor: colors.primary },
-  chipText: { fontSize: 14, fontWeight: '700', color: colors.text },
+  chipPicked: { backgroundColor: colors.primaryPale, borderColor: colors.primary },
+  chipText: { fontSize: 14, fontFamily: fonts.semibold, color: colors.text },
   chipTextPicked: { color: colors.primary },
 });

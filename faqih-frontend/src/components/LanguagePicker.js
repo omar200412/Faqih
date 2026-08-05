@@ -6,7 +6,7 @@ import {
   StyleSheet, Animated, Pressable,
 } from 'react-native';
 import { useLang, LANG_LIST } from '../i18n';
-import { colors, radius, shadow, spacing } from '../theme';
+import { colors, radius, shadow, spacing, fonts } from '../theme';
 
 export default function LanguagePicker({ visible, onClose }) {
   const { t, setLang } = useLang();
@@ -102,9 +102,9 @@ const styles = StyleSheet.create({
     ...shadow.lg,
   },
   title: {
-    fontSize: 20, fontWeight: '800', color: colors.primary,
+    fontSize: 20, color: colors.primary,
     textAlign: 'center', marginBottom: 12,
-    fontFamily: 'Georgia',
+    fontFamily: fonts.headingXB,
   },
   divider: {
     height: 1, backgroundColor: colors.neutral, marginBottom: 12,
@@ -123,10 +123,10 @@ const styles = StyleSheet.create({
   },
   flag:     { fontSize: 28 },
   langInfo: { flex: 1, flexDirection: 'row', alignItems: 'center', gap: 8 },
-  langName: { fontSize: 17, fontWeight: '700', color: colors.text },
+  langName: { fontSize: 17, fontFamily: fonts.semibold, color: colors.text },
   langNameActive: { color: colors.primary },
   rtlTag: {
-    fontSize: 10, fontWeight: '800', color: colors.gold,
+    fontSize: 10, fontFamily: fonts.headingXB, color: colors.gold,
     backgroundColor: colors.goldPale, borderRadius: 4,
     paddingHorizontal: 6, paddingVertical: 2,
     letterSpacing: 0.5,
@@ -136,7 +136,7 @@ const styles = StyleSheet.create({
     backgroundColor: colors.primary,
     alignItems: 'center', justifyContent: 'center',
   },
-  checkMark: { color: colors.white, fontSize: 14, fontWeight: '800' },
+  checkMark: { color: colors.white, fontSize: 14, fontFamily: fonts.headingXB },
 
   // Notice
   notice: {
@@ -149,5 +149,5 @@ const styles = StyleSheet.create({
   closeBtn: {
     alignSelf: 'center', padding: 8, marginTop: 4,
   },
-  closeBtnText: { fontSize: 20, color: colors.textMuted, fontWeight: '700' },
+  closeBtnText: { fontSize: 20, color: colors.textMuted, fontFamily: fonts.semibold },
 });
