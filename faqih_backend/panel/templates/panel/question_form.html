@@ -3,12 +3,12 @@
 {% block title %}{{ type_label }} — Faqih İçerik Paneli{% endblock %}
 
 {% block main %}
-  <div class="crumb">{{ unit.category.title }} → {{ unit.title }}</div>
+  <div class="crumb">{{ unit.category.title }} → {{ unit.title }} → {{ lesson.title }}</div>
   <div class="main-head">
     <div>
       <h1>{% if question %}Düzenle{% else %}Yeni{% endif %}: {{ type_label }}</h1>
     </div>
-    <a class="btn btn-ghost" href="{% url 'panel:unit' unit.id %}">‹ Geri</a>
+    <a class="btn btn-ghost" href="{% url 'panel:lesson' lesson.id %}">‹ Geri</a>
   </div>
 
   <div class="editor">
@@ -91,6 +91,43 @@
           <button type="button" class="btn btn-ghost" id="addpair">+ Çift ekle</button>
           <div class="hint">Uygulamada sağ sütun karışık sırayla gösterilir.</div>
         </div>
+      {% elif qtype == 'ordering' %}
+        <div class="field">
+          <label>Adımlar (doğru sırada yaz)</label>
+          <div id="steps">
+            {% for s in step_rows %}
+              <div class="pair-row" style="grid-template-columns: auto 1fr auto">
+                <span class="letter">{{ forloop.counter }}</span>
+                <input type="text" name="step" value="{{ s }}" placeholder="{{ forloop.counter }}. adım">
+                <button type="button" class="rm" title="Adımı sil">✕</button>
+              </div>
+            {% endfor %}
+          </div>
+          <button type="button" class="btn btn-ghost" id="addstep">+ Adım ekle</button>
+          <div class="hint">Öğrenciye karışık sırada gösterilir, doğru sıraya dizmesi istenir.</div>
+        </div>
+      {% elif qtype == 'fill_blank' %}
+        <div class="field">
+          <label for="f-sentence">Cümle (boşluk için ___ kullan)</label>
+          <input type="text" id="f-sentence" name="sentence" value="{{ initial.sentence }}"
+            placeholder="Örn: Abdestin ___ farzı vardır.">
+        </div>
+        <div class="field">
+          <label>Kelime havuzu (doğrusunu ✓ ile işaretle)</label>
+          {% for w in word_rows %}
+            <div class="opt-row">
+              <span class="letter">{{ forloop.counter }}</span>
+              <input type="text" name="word" value="{{ w }}" placeholder="{{ forloop.counter }}. kelime">
+              <label title="Doğru kelime olarak işaretle">
+                <input type="radio" name="fb_correct_idx" value="{{ forloop.counter0 }}"
+                  {% if initial.fb_correct == w %}checked{% endif %}>
+                <span class="mark">✓</span>
+              </label>
+            </div>
+          {% endfor %}
+          <input type="hidden" name="fb_correct" id="f-fb-correct" value="{{ initial.fb_correct }}">
+          <div class="hint">✓ ile doğru kelimeyi işaretle.</div>
+        </div>
       {% endif %}
 
       <div class="field">
@@ -101,7 +138,7 @@
 
       <div class="form-acts">
         <button class="btn btn-green" type="submit">Kaydet</button>
-        <a class="btn btn-ghost" href="{% url 'panel:unit' unit.id %}">Vazgeç</a>
+        <a class="btn btn-ghost" href="{% url 'panel:lesson' lesson.id %}">Vazgeç</a>
       </div>
     </form>
 
@@ -109,7 +146,7 @@
       <div class="pv-label">Canlı Önizleme</div>
       <div class="phone"><div class="screen">
         <div class="pv-progress"><i></i></div>
-        <div class="pv-topbar"><span>✕</span><span>1 / {{ unit.questions.count|default:1 }}</span><span class="pv-xp">☀ 10 XP</span></div>
+        <div class="pv-topbar"><span>✕</span><span>1 / {{ lesson.exercises.count|default:1 }}</span><span class="pv-xp">☀ 10 XP</span></div>
         <div class="pv-body">
           {% if qtype == 'video' %}
             <div class="pv-video"><div class="play">▶</div></div>
@@ -243,6 +280,43 @@
       });
     }
     bindRemove();
+  }
+
+  var fbCorrectHidden = document.getElementById('f-fb-correct');
+  if (fbCorrectHidden) {
+    form.querySelectorAll('input[name=fb_correct_idx]').forEach(function (radio) {
+      radio.addEventListener('change', function () {
+        fbCorrectHidden.value = radio.closest('.opt-row').querySelector('[name=word]').value.trim();
+      });
+    });
+    form.querySelectorAll('input[name=word]').forEach(function (input) {
+      input.addEventListener('input', function () {
+        var checked = form.querySelector('input[name=fb_correct_idx]:checked');
+        if (checked && checked.closest('.opt-row').querySelector('[name=word]') === input) {
+          fbCorrectHidden.value = input.value.trim();
+        }
+      });
+    });
+  }
+
+  var stepsBox = document.getElementById('steps');
+  if (stepsBox) {
+    document.getElementById('addstep').addEventListener('click', function () {
+      var row = stepsBox.querySelector('.pair-row').cloneNode(true);
+      row.querySelector('input').value = '';
+      stepsBox.appendChild(row);
+      bindRemoveSteps();
+    });
+    function bindRemoveSteps() {
+      stepsBox.querySelectorAll('.rm').forEach(function (b) {
+        b.onclick = function () {
+          if (stepsBox.querySelectorAll('.pair-row').length > 1) {
+            b.closest('.pair-row').remove();
+          }
+        };
+      });
+    }
+    bindRemoveSteps();
   }
 
   form.addEventListener('input', refresh);
