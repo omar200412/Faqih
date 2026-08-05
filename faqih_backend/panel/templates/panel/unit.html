@@ -4,35 +4,33 @@
 
 {% block main %}
   {% if unit %}
-    <div class="crumb">{{ unit.category.title }} → {{ unit.title }}</div>
+    <div class="crumb">{{ unit.category.title }}</div>
     <div class="main-head">
       <div>
         <h1>{{ unit.title }}</h1>
-        <div class="sub">{{ rows|length }} soru</div>
+        <div class="sub">{{ lessons|length }} ders</div>
       </div>
-      <a class="btn btn-gold" href="{% url 'panel:type_picker' unit.id %}">+ Yeni Soru</a>
+      <a class="btn btn-gold" href="{% url 'panel:lesson_new' unit.id %}">+ Yeni Ders</a>
     </div>
     <div class="qlist">
-      {% for r in rows %}
+      {% for lesson in lessons %}
         <div class="qrow">
-          <span class="chip" style="--tc: var(--t-{{ r.qtype }}, var(--muted))">{{ r.type_label }}</span>
+          <span class="chip" style="--tc: var(--muted)">{{ lesson.exercises.count }} alıştırma</span>
           <div class="qtext">
-            <div class="t">{{ r.obj.text }}</div>
-            <div class="a">{{ r.hint }}</div>
+            <div class="t"><a href="{% url 'panel:lesson' lesson.id %}">{{ lesson.title }}</a></div>
+            <div class="a">{% if lesson.intro_kind != 'none' %}Giriş: {{ lesson.get_intro_kind_display }}{% else %}Girişsiz{% endif %}</div>
           </div>
           <div class="qacts">
-            {% if r.editable %}
-              <a href="{% url 'panel:question_edit' r.obj.id %}">Düzenle</a>
-            {% endif %}
-            <form method="post" action="{% url 'panel:question_delete' r.obj.id %}"
-                  onsubmit="return confirm('Bu soru silinsin mi?');">
+            <a href="{% url 'panel:lesson_edit' lesson.id %}">Düzenle</a>
+            <form method="post" action="{% url 'panel:lesson_delete' lesson.id %}"
+                  onsubmit="return confirm('Bu ders silinsin mi? İçindeki tüm alıştırmalar da silinir.');">
               {% csrf_token %}
               <button type="submit">Sil</button>
             </form>
           </div>
         </div>
       {% empty %}
-        <div class="empty">Bu ünitede henüz soru yok.<br>“+ Yeni Soru” ile ilk içeriği ekle.</div>
+        <div class="empty">Bu ünitede henüz ders yok.<br>“+ Yeni Ders” ile ilk dersi ekle.</div>
       {% endfor %}
     </div>
   {% else %}

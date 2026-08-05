@@ -1,0 +1,86 @@
+{% extends "panel/base.html" %}
+
+{% block title %}{% if lesson %}Dersi Düzenle{% else %}Yeni Ders{% endif %} — Faqih İçerik Paneli{% endblock %}
+
+{% block main %}
+  <div class="crumb">{{ unit.category.title }} → {{ unit.title }}</div>
+  <div class="main-head">
+    <div>
+      <h1>{% if lesson %}Dersi Düzenle{% else %}Yeni Ders{% endif %}</h1>
+    </div>
+    <a class="btn btn-ghost" href="{% url 'panel:unit' unit.id %}">‹ Geri</a>
+  </div>
+
+  <form class="form" method="post" enctype="multipart/form-data" style="max-width:520px">
+    {% csrf_token %}
+    {% if errors %}
+      <div class="errors">{% for e in errors %}<div>{{ e }}</div>{% endfor %}</div>
+    {% endif %}
+
+    <div class="field">
+      <label for="f-title">Ders adı</label>
+      <input type="text" id="f-title" name="title" value="{{ lesson.title|default:'' }}" required
+        placeholder="Örn: Namazın Farzları">
+    </div>
+
+    <div class="field">
+      <label>Giriş türü (isteğe bağlı)</label>
+      <div class="seg">
+        <label>
+          <input type="radio" name="intro_kind" value="none" {% if not lesson or lesson.intro_kind == 'none' %}checked{% endif %} onchange="toggleIntro(this.value)">
+          <span>Yok</span>
+        </label>
+        <label>
+          <input type="radio" name="intro_kind" value="text" {% if lesson.intro_kind == 'text' %}checked{% endif %} onchange="toggleIntro(this.value)">
+          <span>Metin</span>
+        </label>
+        <label>
+          <input type="radio" name="intro_kind" value="image" {% if lesson.intro_kind == 'image' %}checked{% endif %} onchange="toggleIntro(this.value)">
+          <span>Görsel</span>
+        </label>
+        <label>
+          <input type="radio" name="intro_kind" value="video" {% if lesson.intro_kind == 'video' %}checked{% endif %} onchange="toggleIntro(this.value)">
+          <span>Video</span>
+        </label>
+      </div>
+      <div class="hint">Öğrenci derse başlamadan önce bu içeriği görür. Boş bırakılırsa direkt sorularla başlar.</div>
+    </div>
+
+    <div class="field" id="intro-text-field" style="display:none">
+      <label for="f-intro-text">Giriş metni</label>
+      <textarea id="f-intro-text" name="intro_text" rows="4"
+        placeholder="Örn: Namaz, İslam'ın beş vaktinde farz kılınan ibadettir…">{{ lesson.intro_text|default:'' }}</textarea>
+    </div>
+
+    <div class="field" id="intro-video-field" style="display:none">
+      <label for="f-intro-video">Giriş videosu</label>
+      <input type="text" id="f-intro-video" name="intro_video_url" value="{{ lesson.intro_video_url|default:'' }}" placeholder="https://youtu.be/…">
+    </div>
+
+    <div class="field" id="intro-image-field" style="display:none">
+      <label for="f-intro-image">Giriş görseli {% if lesson.intro_image_data %}(değiştirmek istemiyorsan boş bırak){% endif %}</label>
+      {% if lesson.intro_image_data %}
+        <img src="/api/media/ders-giris/{{ lesson.id }}/" alt="Mevcut görsel"
+             style="max-width:260px;border-radius:12px;display:block;margin-bottom:8px;border:1.5px solid var(--line)">
+      {% endif %}
+      <input type="file" id="f-intro-image" name="intro_image" accept="image/*">
+      <div class="hint">JPG veya PNG, en fazla 2 MB.</div>
+    </div>
+
+    <div class="form-acts">
+      <button class="btn btn-green" type="submit">Kaydet</button>
+      <a class="btn btn-ghost" href="{% url 'panel:unit' unit.id %}">Vazgeç</a>
+    </div>
+  </form>
+{% endblock %}
+
+{% block scripts %}
+<script>
+  function toggleIntro(kind) {
+    document.getElementById('intro-text-field').style.display = kind === 'text' ? '' : 'none';
+    document.getElementById('intro-video-field').style.display = kind === 'video' ? '' : 'none';
+    document.getElementById('intro-image-field').style.display = kind === 'image' ? '' : 'none';
+  }
+  toggleIntro(document.querySelector('input[name=intro_kind]:checked').value);
+</script>
+{% endblock %}

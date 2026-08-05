@@ -6,18 +6,19 @@ import {
   StyleSheet, Animated, ActivityIndicator,
   StatusBar, SafeAreaView,
 } from 'react-native';
-import { getCategories } from '../API';
+import { getCategories, getUnit } from '../API';
 import { colors, radius, shadow, spacing, fonts } from '../theme';
 import { PatternDots, XPBar, getCategoryStyle } from '../components/CustomButton';
 import LanguagePicker from '../components/LanguagePicker';
 import { useLang, useRTL } from '../i18n';
 
-const USER = { name: 'Kullanıcı', xp: 340, xpMax: 500, streak: 7, completedUnits: [1] };
+const USER = { name: 'Kullanıcı', xp: 340, xpMax: 500, streak: 7, completedLessons: [1] };
 
 export default function HomeScreen({ navigation }) {
   const { t }                    = useLang();
   const { isRTL, flexDirection } = useRTL();
   const [categories, setCategories] = useState([]);
+  const [unitsById, setUnitsById]    = useState({});
   const [loading, setLoading]       = useState(true);
   const [langOpen, setLangOpen]     = useState(false);
   const fadeAnim  = useRef(new Animated.Value(0)).current;
@@ -27,8 +28,13 @@ export default function HomeScreen({ navigation }) {
     setLoading(true);
     fadeAnim.setValue(0);
     slideAnim.setValue(24);
-    getCategories().then(data => {
+    getCategories().then(async (data) => {
       setCategories(data);
+      const allUnits = data.flatMap(c => c.units);
+      const details = await Promise.all(allUnits.map(u => getUnit(u.id)));
+      const byId = {};
+      details.forEach(u => { if (u) byId[u.id] = u; });
+      setUnitsById(byId);
       setLoading(false);
       Animated.parallel([
         Animated.timing(fadeAnim,  { toValue: 1, duration: 600, useNativeDriver: true }),
@@ -37,8 +43,24 @@ export default function HomeScreen({ navigation }) {
     });
   }, [t.lang]);
 
-  const startUnit = (unit) =>
-    navigation.navigate('Quiz', { unitId: unit.id, unitTitle: unit.title });
+  const startLesson = (lesson) =>
+    navigation.navigate('Lesson', { lessonId: lesson.id, lessonTitle: lesson.title });
+
+  // Flattens every unit's lessons in category order, so "is the previous lesson
+  // done" can be checked with a single global index — this is the whole unlock
+  // rule (see docs/superpowers/specs/2026-08-05-curriculum-lesson-model-design.md,
+  // section 2): sequential underneath, path-shaped on screen.
+  const allLessonsInOrder = categories.flatMap(cat =>
+    cat.units.flatMap(u => (unitsById[u.id]?.lessons ?? []))
+  );
+
+  const lessonNodeState = (lesson) => {
+    const globalIndex = allLessonsInOrder.findIndex(l => l.id === lesson.id);
+    if (USER.completedLessons.includes(lesson.id)) return 'done';
+    if (globalIndex <= 0) return 'next';
+    const previous = allLessonsInOrder[globalIndex - 1];
+    return USER.completedLessons.includes(previous.id) ? 'next' : 'locked';
+  };
 
   return (
     <SafeAreaView style={styles.safe}>
@@ -81,7 +103,7 @@ export default function HomeScreen({ navigation }) {
           </View>
         </View>
 
-        {/* Categories */}
+        {/* Path */}
         {loading ? (
           <ActivityIndicator size="large" color={colors.primary} style={{ marginTop: 60 }} />
         ) : (
@@ -93,40 +115,48 @@ export default function HomeScreen({ navigation }) {
                   <View style={[styles.categoryHeader, { backgroundColor: cs.bg, flexDirection }]}>
                     <Text style={styles.categoryIcon}>{cs.icon}</Text>
                     <Text style={[styles.categoryTitle, { color: cs.text }]}>{category.title}</Text>
-                    <Text style={[styles.categoryCount, { color: cs.text }]}>
-                      {category.units.length} {t.home.lessonsUnit}
-                    </Text>
                   </View>
 
-                  <View style={styles.unitsGrid}>
-                    {category.units.map((unit, uIdx) => {
-                      const isDone   = USER.completedUnits.includes(unit.id);
-                      const isLocked = uIdx > 0 && !USER.completedUnits.includes(category.units[uIdx - 1]?.id);
-                      return (
-                        <TouchableOpacity
-                          key={unit.id}
-                          style={[styles.unitCard, { flexDirection }, isDone && styles.unitDone, isLocked && styles.unitLocked]}
-                          onPress={() => !isLocked && startUnit(unit)}
-                          activeOpacity={0.85}
-                        >
-                          <View style={[styles.unitIcon, { backgroundColor: isLocked ? colors.neutral : isDone ? colors.correct : cs.bg }]}>
-                            <Text style={styles.unitIconText}>{isLocked ? '🔒' : isDone ? '⭐' : '📖'}</Text>
-                          </View>
-                          <View style={styles.unitInfo}>
-                            <Text style={[styles.unitTitle, isLocked && styles.lockedText, isRTL && styles.rtlText]}>
-                              {unit.title}
-                            </Text>
-                            <Text style={[styles.unitMeta, isRTL && styles.rtlText]}>
-                              {t.home.questionCount(unit.question_count)}{isDone ? `  ✓ ${t.home.completed}` : ''}
-                            </Text>
-                          </View>
-                          {!isLocked && (
-                            <Text style={[styles.chevron, { color: cs.bg }]}>{isRTL ? '‹' : '›'}</Text>
+                  {category.units.map((unit) => {
+                    const lessons = unitsById[unit.id]?.lessons ?? [];
+                    return (
+                      <View key={unit.id} style={styles.unitBlock}>
+                        <Text style={[styles.unitLabel, isRTL && styles.rtlText]}>{unit.title}</Text>
+                        <View style={styles.path}>
+                          {lessons.map((lesson, i) => {
+                            const nodeState = lessonNodeState(lesson);
+                            const offset = i % 2 === 0 ? 0 : 28;
+                            return (
+                              <TouchableOpacity
+                                key={lesson.id}
+                                disabled={nodeState === 'locked'}
+                                onPress={() => startLesson(lesson)}
+                                activeOpacity={0.85}
+                                style={[
+                                  styles.node,
+                                  { marginLeft: isRTL ? 0 : offset, marginRight: isRTL ? offset : 0 },
+                                  nodeState === 'done'   && styles.nodeDone,
+                                  nodeState === 'locked' && styles.nodeLocked,
+                                ]}
+                              >
+                                <Text style={styles.nodeIcon}>
+                                  {nodeState === 'locked' ? '🔒' : nodeState === 'done' ? '⭐' : '📖'}
+                                </Text>
+                                <Text style={[styles.nodeTitle, nodeState === 'locked' && styles.nodeTitleLocked]} numberOfLines={2}>
+                                  {lesson.title}
+                                </Text>
+                              </TouchableOpacity>
+                            );
+                          })}
+                          {lessons.length > 0 && (
+                            <View style={[styles.checkpoint, { alignSelf: isRTL ? 'flex-start' : 'flex-end' }]}>
+                              <Text style={styles.checkpointText}>🏁</Text>
+                            </View>
                           )}
-                        </TouchableOpacity>
-                      );
-                    })}
-                  </View>
+                        </View>
+                      </View>
+                    );
+                  })}
                 </View>
               );
             })}
@@ -171,27 +201,27 @@ const styles = StyleSheet.create({
   streakIcon:    { fontSize: 16 },
   streakText:    { color: colors.white, fontSize: 13, fontWeight: '700' },
   xpWrapper:     { flex: 1 },
-  categoryBlock: {
-    marginHorizontal: spacing.md, marginTop: spacing.lg,
-    borderRadius: radius.xl, overflow: 'hidden',
-    backgroundColor: colors.card, ...shadow.md,
+  categoryBlock: { marginHorizontal: spacing.md, marginTop: spacing.lg },
+  categoryHeader: { alignItems: 'center', paddingVertical: 12, paddingHorizontal: spacing.md, gap: 10, borderRadius: radius.lg, marginBottom: spacing.md },
+  categoryIcon:   { fontSize: 20 },
+  categoryTitle:  { fontSize: 16, fontFamily: fonts.heading, fontWeight: '700' },
+  unitBlock:      { marginBottom: spacing.lg },
+  unitLabel:      { fontSize: 13, fontWeight: '700', color: colors.textMuted, marginBottom: spacing.sm, textTransform: 'uppercase', letterSpacing: 0.5 },
+  path:           { gap: 14, alignItems: 'flex-start' },
+  node: {
+    width: 140, alignItems: 'center', gap: 6,
+    backgroundColor: colors.card, borderRadius: radius.lg,
+    paddingVertical: 14, paddingHorizontal: 10, ...shadow.sm,
+    borderWidth: 1.5, borderColor: colors.neutral,
   },
-  categoryHeader: { alignItems: 'center', paddingVertical: 14, paddingHorizontal: spacing.md, gap: 10 },
-  categoryIcon:   { fontSize: 22 },
-  categoryTitle:  { fontSize: 17, fontFamily: fonts.heading, fontWeight: '700', flex: 1 },
-  categoryCount:  { fontSize: 12, fontWeight: '600', opacity: 0.8 },
-  unitsGrid:      { paddingVertical: spacing.xs },
-  unitCard: {
-    alignItems: 'center', paddingVertical: 14, paddingHorizontal: spacing.md, gap: 14,
-    borderBottomWidth: 1, borderBottomColor: colors.neutral,
+  nodeDone:        { backgroundColor: '#F5FBF7', borderColor: colors.correct },
+  nodeLocked:      { opacity: 0.55 },
+  nodeIcon:        { fontSize: 22 },
+  nodeTitle:       { fontSize: 12.5, fontWeight: '700', color: colors.text, textAlign: 'center' },
+  nodeTitleLocked: { color: colors.textLight },
+  checkpoint: {
+    width: 44, height: 44, borderRadius: 22, backgroundColor: colors.goldPale,
+    alignItems: 'center', justifyContent: 'center', borderWidth: 2, borderColor: colors.goldLight,
   },
-  unitDone:     { backgroundColor: '#F5FBF7' },
-  unitLocked:   { opacity: 0.5 },
-  unitIcon:     { width: 44, height: 44, borderRadius: radius.md, alignItems: 'center', justifyContent: 'center' },
-  unitIconText: { fontSize: 20 },
-  unitInfo:     { flex: 1 },
-  unitTitle:    { fontSize: 15, fontWeight: '700', color: colors.text, marginBottom: 3 },
-  unitMeta:     { fontSize: 12, color: colors.textMuted, fontWeight: '500' },
-  lockedText:   { color: colors.textLight },
-  chevron:      { fontSize: 26, fontWeight: '300', marginRight: 4 },
+  checkpointText: { fontSize: 18 },
 });
