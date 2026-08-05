@@ -2,19 +2,32 @@
 
 from django.http import Http404, HttpResponse
 from rest_framework import viewsets
-from .models import Category, Unit, Question
-from .serializers import CategorySerializer, UnitSerializer, QuestionSerializer
+from .models import Category, Unit, Lesson, Exercise
+from .serializers import CategorySerializer, UnitSerializer, LessonSerializer, ExerciseSerializer
 
 
 def question_image(request, pk):
     """Veritabanında saklanan soru görselini servis eder."""
     try:
-        q = Question.objects.get(pk=pk)
-    except Question.DoesNotExist:
+        exercise = Exercise.objects.get(pk=pk)
+    except Exercise.DoesNotExist:
         raise Http404
-    if not q.image_data:
+    if not exercise.image_data:
         raise Http404
-    response = HttpResponse(bytes(q.image_data), content_type=q.image_mime or 'image/jpeg')
+    response = HttpResponse(bytes(exercise.image_data), content_type=exercise.image_mime or 'image/jpeg')
+    response['Cache-Control'] = 'public, max-age=86400'
+    return response
+
+
+def lesson_intro_image(request, pk):
+    """Veritabanında saklanan ders girişi görselini servis eder."""
+    try:
+        lesson = Lesson.objects.get(pk=pk)
+    except Lesson.DoesNotExist:
+        raise Http404
+    if not lesson.intro_image_data:
+        raise Http404
+    response = HttpResponse(bytes(lesson.intro_image_data), content_type=lesson.intro_image_mime or 'image/jpeg')
     response['Cache-Control'] = 'public, max-age=86400'
     return response
 
@@ -29,16 +42,24 @@ class CategoryViewSet(viewsets.ReadOnlyModelViewSet):
 
 class UnitViewSet(viewsets.ReadOnlyModelViewSet):
     """
-    Belirli bir üniteye tıklandığında soruları getirir.
+    Belirli bir üniteye tıklandığında dersleri (özet) getirir.
     Endpoint: /api/units/
     """
     queryset = Unit.objects.all()
     serializer_class = UnitSerializer
 
-class QuestionViewSet(viewsets.ReadOnlyModelViewSet):
+class LessonViewSet(viewsets.ReadOnlyModelViewSet):
     """
-    Tüm soruları listeler (Gerekirse filtreleme yapılabilir).
+    Belirli bir derse tıklandığında girişi ve tüm alıştırmaları getirir.
+    Endpoint: /api/lessons/
+    """
+    queryset = Lesson.objects.all()
+    serializer_class = LessonSerializer
+
+class ExerciseViewSet(viewsets.ReadOnlyModelViewSet):
+    """
+    Tüm alıştırmaları listeler (Gerekirse filtreleme yapılabilir).
     Endpoint: /api/questions/
     """
-    queryset = Question.objects.all()
-    serializer_class = QuestionSerializer
+    queryset = Exercise.objects.all()
+    serializer_class = ExerciseSerializer
