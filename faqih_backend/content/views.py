@@ -1,9 +1,15 @@
 # content/views.py
 
 from django.http import Http404, HttpResponse
+from django.utils import timezone
 from rest_framework import viewsets
-from .models import Category, Unit, Lesson, Exercise
-from .serializers import CategorySerializer, UnitSerializer, LessonSerializer, ExerciseSerializer
+from rest_framework.decorators import action
+from rest_framework.response import Response
+from .models import Category, Unit, Lesson, Exercise, UserProgress, GEMS_PER_LESSON, HEART_REFILL_COST
+from .serializers import (
+    CategorySerializer, UnitSerializer, LessonSerializer, ExerciseSerializer,
+    UserProgressSerializer,
+)
 
 
 def question_image(request, pk):
@@ -63,3 +69,20 @@ class ExerciseViewSet(viewsets.ReadOnlyModelViewSet):
     """
     queryset = Exercise.objects.all()
     serializer_class = ExerciseSerializer
+
+
+class UserProgressViewSet(viewsets.ViewSet):
+    """
+    Anonymous, device-id-keyed progress (hearts/gems/xp).
+    Endpoint: /api/progress/<device_id>/
+    """
+
+    def _get_or_create(self, device_id):
+        obj, _ = UserProgress.objects.get_or_create(device_id=device_id)
+        obj.apply_heart_regen()
+        obj.save()
+        return obj
+
+    def retrieve(self, request, pk=None):
+        obj = self._get_or_create(pk)
+        return Response(UserProgressSerializer(obj).data)

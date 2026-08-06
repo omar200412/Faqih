@@ -244,3 +244,25 @@ class UserProgressModelTests(TestCase):
         p.apply_heart_regen()
         self.assertEqual(p.hearts, 3)
         self.assertIsNone(p.last_heart_lost_at)
+
+
+from rest_framework.test import APITestCase
+
+
+class UserProgressAPITests(APITestCase):
+    def test_get_creates_progress_with_defaults_on_first_call(self):
+        res = self.client.get('/api/progress/new-device/')
+        self.assertEqual(res.status_code, 200)
+        self.assertEqual(res.data['hearts'], 3)
+        self.assertEqual(res.data['gems'], 0)
+        self.assertEqual(res.data['completed_lesson_ids'], [])
+
+    def test_get_applies_regen_before_returning(self):
+        from .models import UserProgress
+        UserProgress.objects.create(
+            device_id='regen-device', hearts=1,
+            last_heart_lost_at=timezone.now() - timedelta(minutes=31),
+        )
+        res = self.client.get('/api/progress/regen-device/')
+        self.assertEqual(res.status_code, 200)
+        self.assertEqual(res.data['hearts'], 2)

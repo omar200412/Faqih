@@ -2,6 +2,7 @@ from django.urls import path, include
 from rest_framework.routers import DefaultRouter
 from .views import (
     CategoryViewSet, UnitViewSet, LessonViewSet, ExerciseViewSet,
+    UserProgressViewSet,
     question_image, lesson_intro_image,
 )
 
@@ -10,6 +11,7 @@ router.register(r'categories', CategoryViewSet)
 router.register(r'units', UnitViewSet)
 router.register(r'lessons', LessonViewSet)
 router.register(r'questions', ExerciseViewSet)
+router.register(r'progress', UserProgressViewSet, basename='progress')
 
 urlpatterns = [
     path('media/soru/<int:pk>/', question_image, name='question_image'),

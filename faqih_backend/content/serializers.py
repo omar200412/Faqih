@@ -2,7 +2,7 @@
 
 import json
 from rest_framework import serializers
-from .models import Category, Unit, Lesson, Exercise
+from .models import Category, Unit, Lesson, Exercise, UserProgress
 
 
 class ExerciseSerializer(serializers.ModelSerializer):
@@ -165,4 +165,13 @@ class CategorySerializer(serializers.ModelSerializer):
             'id',
             'title',
             'units',
+        ]
+
+
+class UserProgressSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = UserProgress
+        fields = [
+            'device_id', 'hearts', 'hearts_max', 'last_heart_lost_at',
+            'gems', 'xp', 'streak', 'completed_lesson_ids',
         ]
