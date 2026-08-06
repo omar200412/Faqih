@@ -1,6 +1,8 @@
+from datetime import timedelta
 from django.test import TestCase, TransactionTestCase
 from django.db.migrations.executor import MigrationExecutor
 from django.db import connection
+from django.utils import timezone
 from .models import Category, Unit, Lesson
 
 
@@ -192,3 +194,53 @@ class NewExerciseTypeApiTests(TestCase):
         self.assertEqual(exercise['options']['sentence'], 'Abdestin ___ farzı vardır.')
         self.assertEqual(exercise['options']['word_bank'], ['dört', 'beş', 'altı'])
         self.assertEqual(exercise['correct_answer'], 'dört')
+
+
+class UserProgressModelTests(TestCase):
+    def test_defaults_on_creation(self):
+        from .models import UserProgress
+        p = UserProgress.objects.create(device_id='dev-1')
+        self.assertEqual(p.hearts, 3)
+        self.assertEqual(p.hearts_max, 3)
+        self.assertEqual(p.gems, 0)
+        self.assertEqual(p.xp, 0)
+        self.assertEqual(p.streak, 0)
+        self.assertEqual(p.completed_lesson_ids, [])
+        self.assertIsNone(p.last_heart_lost_at)
+
+    def test_regen_does_nothing_before_30_minutes(self):
+        from .models import UserProgress
+        p = UserProgress.objects.create(
+            device_id='dev-2', hearts=1,
+            last_heart_lost_at=timezone.now() - timedelta(minutes=29),
+        )
+        p.apply_heart_regen()
+        self.assertEqual(p.hearts, 1)
+        self.assertIsNotNone(p.last_heart_lost_at)
+
+    def test_regen_restores_one_heart_after_30_minutes(self):
+        from .models import UserProgress
+        p = UserProgress.objects.create(
+            device_id='dev-3', hearts=1,
+            last_heart_lost_at=timezone.now() - timedelta(minutes=31),
+        )
+        p.apply_heart_regen()
+        self.assertEqual(p.hearts, 2)
+        self.assertIsNotNone(p.last_heart_lost_at)  # not yet full, keeps a timestamp
+
+    def test_regen_caps_at_hearts_max_and_clears_timestamp(self):
+        from .models import UserProgress
+        p = UserProgress.objects.create(
+            device_id='dev-4', hearts=2, hearts_max=3,
+            last_heart_lost_at=timezone.now() - timedelta(hours=5),
+        )
+        p.apply_heart_regen()
+        self.assertEqual(p.hearts, 3)
+        self.assertIsNone(p.last_heart_lost_at)
+
+    def test_regen_is_noop_when_already_full(self):
+        from .models import UserProgress
+        p = UserProgress.objects.create(device_id='dev-5', hearts=3, hearts_max=3)
+        p.apply_heart_regen()
+        self.assertEqual(p.hearts, 3)
+        self.assertIsNone(p.last_heart_lost_at)
