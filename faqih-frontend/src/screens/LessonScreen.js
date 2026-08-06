@@ -10,14 +10,17 @@ import { colors, radius, shadow, spacing, fonts } from '../theme';
 import { OptionButton, PrimaryButton } from '../components/CustomButton';
 import { OrderingExercise, FillBlankExercise } from '../components/ExerciseTypes';
 import { createSession, answerCurrent } from '../logic/lessonSession';
+import { useProgress } from '../logic/useProgress';
+import { minutesUntilNextHeart } from '../logic/heartsCountdown';
 import { useLang, useRTL } from '../i18n';
 
-const STATE = { LOADING: 'loading', INTRO: 'intro', QUESTION: 'question', FEEDBACK: 'feedback', RESULTS: 'results' };
+const STATE = { LOADING: 'loading', INTRO: 'intro', QUESTION: 'question', FEEDBACK: 'feedback', RESULTS: 'results', NO_HEARTS: 'no_hearts' };
 
 export default function LessonScreen({ route, navigation }) {
   const { lessonId, lessonTitle }  = route.params;
   const { t }                      = useLang();
   const { isRTL, flexDirection }   = useRTL();
+  const { progress, reportAnswer, completeLesson, refillHearts } = useProgress();
 
   const [lesson, setLesson]     = useState(null);
   const [session, setSession]   = useState(null);
@@ -92,11 +95,16 @@ export default function LessonScreen({ route, navigation }) {
     ]).start();
   };
 
-  const settle = (isCorrect, chosenLabel) => {
+  const settle = async (isCorrect, chosenLabel) => {
     setResultCorrect(isCorrect);
     if (!isCorrect) {
       setMistakes(m => [...m, { question, chosen: chosenLabel }]);
       shake();
+      const updated = await reportAnswer(false);
+      if (updated && updated.hearts === 0) {
+        setState(STATE.NO_HEARTS);
+        return;
+      }
     }
     setState(STATE.FEEDBACK);
     Animated.timing(feedbackAnim, { toValue: 1, duration: 300, useNativeDriver: true }).start();
@@ -150,6 +158,7 @@ export default function LessonScreen({ route, navigation }) {
     setSession(nextSession);
     feedbackAnim.setValue(0); setSelected(null); resetMatching();
     if (nextSession.finished) {
+      completeLesson(lessonId);
       setState(STATE.RESULTS);
     } else {
       setState(STATE.QUESTION);
@@ -259,6 +268,37 @@ export default function LessonScreen({ route, navigation }) {
             </TouchableOpacity>
           </View>
           <View style={{ height: 40 }} />
+        </ScrollView>
+      </SafeAreaView>
+    );
+  }
+
+  // Out of hearts
+  if (state === STATE.NO_HEARTS) {
+    // 50 mirrors HEART_REFILL_COST in faqih_backend/content/models.py.
+    const HEART_REFILL_COST = 50;
+    const mins = minutesUntilNextHeart(progress.last_heart_lost_at);
+    const canRefill = progress.gems >= HEART_REFILL_COST;
+    return (
+      <SafeAreaView style={styles.safe}>
+        <StatusBar barStyle="dark-content" />
+        <ScrollView contentContainerStyle={styles.introScroll}>
+          <View style={styles.introCard}>
+            <Text style={styles.introTitle}>{t.home.heartsOutTitle}</Text>
+            <Text style={styles.introText}>{t.home.heartsOutMessage(mins)}</Text>
+          </View>
+          {canRefill && (
+            <PrimaryButton
+              title={t.home.refillWithGems(HEART_REFILL_COST)}
+              onPress={async () => {
+                const result = await refillHearts();
+                if (result.ok) { setState(STATE.QUESTION); animateCardIn(); }
+              }}
+            />
+          )}
+          <TouchableOpacity onPress={() => navigation.navigate('Home')} style={styles.homeBtn}>
+            <Text style={styles.homeBtnText}>{t.results.home}</Text>
+          </TouchableOpacity>
         </ScrollView>
       </SafeAreaView>
     );
