@@ -86,3 +86,15 @@ class UserProgressViewSet(viewsets.ViewSet):
     def retrieve(self, request, pk=None):
         obj = self._get_or_create(pk)
         return Response(UserProgressSerializer(obj).data)
+
+    @action(detail=True, methods=['post'])
+    def answer(self, request, pk=None):
+        obj = self._get_or_create(pk)
+        if request.data.get('correct'):
+            obj.xp += 10
+        elif obj.hearts > 0:
+            obj.hearts -= 1
+            if obj.last_heart_lost_at is None:
+                obj.last_heart_lost_at = timezone.now()
+        obj.save()
+        return Response(UserProgressSerializer(obj).data)

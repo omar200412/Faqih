@@ -266,3 +266,21 @@ class UserProgressAPITests(APITestCase):
         res = self.client.get('/api/progress/regen-device/')
         self.assertEqual(res.status_code, 200)
         self.assertEqual(res.data['hearts'], 2)
+
+    def test_wrong_answer_decrements_hearts_and_sets_timestamp(self):
+        res = self.client.post('/api/progress/wrong-answer-device/answer/', {'correct': False}, format='json')
+        self.assertEqual(res.status_code, 200)
+        self.assertEqual(res.data['hearts'], 2)
+        self.assertIsNotNone(res.data['last_heart_lost_at'])
+
+    def test_correct_answer_adds_xp_and_does_not_touch_hearts(self):
+        res = self.client.post('/api/progress/correct-answer-device/answer/', {'correct': True}, format='json')
+        self.assertEqual(res.status_code, 200)
+        self.assertEqual(res.data['hearts'], 3)
+        self.assertEqual(res.data['xp'], 10)
+
+    def test_hearts_never_go_below_zero(self):
+        from .models import UserProgress
+        UserProgress.objects.create(device_id='zero-hearts-device', hearts=0)
+        res = self.client.post('/api/progress/zero-hearts-device/answer/', {'correct': False}, format='json')
+        self.assertEqual(res.data['hearts'], 0)
