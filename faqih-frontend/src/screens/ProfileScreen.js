@@ -11,7 +11,7 @@ import LanguagePicker from '../components/LanguagePicker';
 import { useLang, useRTL } from '../i18n';
 
 const USER = {
-  name: 'Kullanıcı', level: 4, xp: 340, xpMax: 500,
+  level: 4, xp: 340, xpMax: 500,
   streak: 7, totalQuestions: 62, correctAnswers: 54,
   completedUnits: 3, joinDays: 14,
 };
@@ -64,10 +64,10 @@ export default function ProfileScreen({ navigation }) {
           <PatternDots style={styles.patternBL} />
           <View style={styles.avatarRing}>
             <View style={styles.avatar}>
-              <Text style={styles.avatarLetter}>{USER.name.charAt(0)}</Text>
+              <Text style={styles.avatarLetter}>{t.home.defaultUser.charAt(0)}</Text>
             </View>
           </View>
-          <Text style={styles.heroName}>{USER.name}</Text>
+          <Text style={styles.heroName}>{t.home.defaultUser}</Text>
           <View style={styles.levelBadge}>
             <Text style={styles.levelText}>
               {t.profile.level(USER.level)}  •  {levelNames[USER.level]}

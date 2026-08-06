@@ -16,6 +16,7 @@ export default {
     completed:      'Tamamlandı',
     locked:         'Kilitli',
     lessonsUnit:    'ders',
+    defaultUser:    'Kullanıcı',
     unitPrefix:     'ÜNİTE',
     heartsOutTitle: 'Canların bitti 💔',
     heartsOutMessage: (mins) => `Bir sonraki can ${mins} dakika içinde yenilenecek.`,

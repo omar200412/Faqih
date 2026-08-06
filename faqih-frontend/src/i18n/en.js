@@ -16,6 +16,7 @@ export default {
     completed:      'Completed',
     locked:         'Locked',
     lessonsUnit:    'lessons',
+    defaultUser:    'User',
     unitPrefix:     'UNIT',
     heartsOutTitle: 'Out of hearts 💔',
     heartsOutMessage: (mins) => `Next heart in ${mins} min.`,

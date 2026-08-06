@@ -14,8 +14,6 @@ import LanguagePicker from '../components/LanguagePicker';
 import { useLang, useRTL } from '../i18n';
 import { useProgress } from '../logic/useProgress';
 
-const DISPLAY_NAME = 'Kullanıcı';
-
 export default function HomeScreen({ navigation }) {
   const { t }                    = useLang();
   const { isRTL, flexDirection } = useRTL();
@@ -80,7 +78,7 @@ export default function HomeScreen({ navigation }) {
           <View style={[styles.headerTop, { flexDirection }]}>
             <View>
               <Text style={[styles.greeting, isRTL && styles.rtlText]}>{t.home.greeting}</Text>
-              <Text style={[styles.userName,  isRTL && styles.rtlText]}>{DISPLAY_NAME}</Text>
+              <Text style={[styles.userName,  isRTL && styles.rtlText]}>{t.home.defaultUser}</Text>
             </View>
             <View style={[styles.headerIcons, { flexDirection }]}>
               <TouchableOpacity onPress={() => setLangOpen(true)} style={styles.langBtn}>
@@ -90,7 +88,7 @@ export default function HomeScreen({ navigation }) {
                 onPress={() => navigation.navigate('Profile')}
                 style={styles.avatarBtn}
               >
-                <Text style={styles.avatarText}>{DISPLAY_NAME.charAt(0).toUpperCase()}</Text>
+                <Text style={styles.avatarText}>{t.home.defaultUser.charAt(0).toUpperCase()}</Text>
               </TouchableOpacity>
             </View>
           </View>

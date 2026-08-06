@@ -16,6 +16,7 @@ export default {
     completed:      'مكتمل',
     locked:         'مقفل',
     lessonsUnit:    'دروس',
+    defaultUser:    'المستخدم',
     unitPrefix:     'الوحدة',
     heartsOutTitle: 'نفدت قلوبك 💔',
     heartsOutMessage: (mins) => `سيتجدد القلب التالي خلال ${mins} دقيقة.`,
