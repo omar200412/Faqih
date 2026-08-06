@@ -16,6 +16,22 @@ export default {
     completed:      'Completed',
     locked:         'Locked',
     lessonsUnit:    'lessons',
+    unitPrefix:     'UNIT',
+    heartsOutTitle: 'Out of hearts 💔',
+    heartsOutMessage: (mins) => `Next heart in ${mins} min.`,
+    refillWithGems: (cost) => `💎 Refill for ${cost}`,
+  },
+
+  nav: {
+    home:    'Home',
+    courses: 'Courses',
+    quests:  'Quests',
+  },
+
+  comingSoon: {
+    title:   'Coming soon',
+    courses: 'Courses is being built.',
+    quests:  'Quests is being built.',
   },
 
   // Quiz

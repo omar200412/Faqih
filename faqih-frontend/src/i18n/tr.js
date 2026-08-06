@@ -16,6 +16,22 @@ export default {
     completed:      'Tamamlandı',
     locked:         'Kilitli',
     lessonsUnit:    'ders',
+    unitPrefix:     'ÜNİTE',
+    heartsOutTitle: 'Canların bitti 💔',
+    heartsOutMessage: (mins) => `Bir sonraki can ${mins} dakika içinde yenilenecek.`,
+    refillWithGems: (cost) => `💎 ${cost} Elmasla Yenile`,
+  },
+
+  nav: {
+    home:    'Ana Sayfa',
+    courses: 'Kurslar',
+    quests:  'Görevler',
+  },
+
+  comingSoon: {
+    title:   'Yakında',
+    courses: 'Kurslar bölümü hazırlanıyor.',
+    quests:  'Görevler bölümü hazırlanıyor.',
   },
 
   // Quiz

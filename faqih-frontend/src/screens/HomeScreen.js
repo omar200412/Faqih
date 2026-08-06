@@ -8,15 +8,18 @@ import {
 } from 'react-native';
 import { getCategories, getUnit } from '../API';
 import { colors, radius, shadow, spacing, fonts } from '../theme';
-import { PatternDots, XPBar, getCategoryStyle } from '../components/CustomButton';
+import { PatternDots, getCategoryStyle } from '../components/CustomButton';
+import { SkillPath } from '../components/SkillPath';
 import LanguagePicker from '../components/LanguagePicker';
 import { useLang, useRTL } from '../i18n';
+import { useProgress } from '../logic/useProgress';
 
-const USER = { name: 'Kullanıcı', xp: 340, xpMax: 500, streak: 7, completedLessons: [1] };
+const DISPLAY_NAME = 'Kullanıcı';
 
 export default function HomeScreen({ navigation }) {
   const { t }                    = useLang();
   const { isRTL, flexDirection } = useRTL();
+  const { progress }                = useProgress();
   const [categories, setCategories] = useState([]);
   const [unitsById, setUnitsById]    = useState({});
   const [loading, setLoading]       = useState(true);
@@ -56,10 +59,10 @@ export default function HomeScreen({ navigation }) {
 
   const lessonNodeState = (lesson) => {
     const globalIndex = allLessonsInOrder.findIndex(l => l.id === lesson.id);
-    if (USER.completedLessons.includes(lesson.id)) return 'done';
+    if (progress.completed_lesson_ids.includes(lesson.id)) return 'done';
     if (globalIndex <= 0) return 'next';
     const previous = allLessonsInOrder[globalIndex - 1];
-    return USER.completedLessons.includes(previous.id) ? 'next' : 'locked';
+    return progress.completed_lesson_ids.includes(previous.id) ? 'next' : 'locked';
   };
 
   return (
@@ -77,7 +80,7 @@ export default function HomeScreen({ navigation }) {
           <View style={[styles.headerTop, { flexDirection }]}>
             <View>
               <Text style={[styles.greeting, isRTL && styles.rtlText]}>{t.home.greeting}</Text>
-              <Text style={[styles.userName,  isRTL && styles.rtlText]}>{USER.name}</Text>
+              <Text style={[styles.userName,  isRTL && styles.rtlText]}>{DISPLAY_NAME}</Text>
             </View>
             <View style={[styles.headerIcons, { flexDirection }]}>
               <TouchableOpacity onPress={() => setLangOpen(true)} style={styles.langBtn}>
@@ -87,19 +90,15 @@ export default function HomeScreen({ navigation }) {
                 onPress={() => navigation.navigate('Profile')}
                 style={styles.avatarBtn}
               >
-                <Text style={styles.avatarText}>{USER.name.charAt(0).toUpperCase()}</Text>
+                <Text style={styles.avatarText}>{DISPLAY_NAME.charAt(0).toUpperCase()}</Text>
               </TouchableOpacity>
             </View>
           </View>
 
-          <View style={[styles.statsRow, { flexDirection }]}>
-            <View style={[styles.streakBadge, { flexDirection }]}>
-              <Text style={styles.streakIcon}>🔥</Text>
-              <Text style={styles.streakText}>{USER.streak} {t.home.streak}</Text>
-            </View>
-            <View style={styles.xpWrapper}>
-              <XPBar current={USER.xp} max={USER.xpMax} />
-            </View>
+          <View style={[styles.pillsRow, { flexDirection }]}>
+            <View style={styles.pill}><Text style={styles.pillText}>🔥 {progress.streak}</Text></View>
+            <View style={styles.pill}><Text style={styles.pillText}>💎 {progress.gems}</Text></View>
+            <View style={styles.pill}><Text style={styles.pillText}>❤️ {progress.hearts}</Text></View>
           </View>
         </View>
 
@@ -121,39 +120,29 @@ export default function HomeScreen({ navigation }) {
                     const lessons = unitsById[unit.id]?.lessons ?? [];
                     return (
                       <View key={unit.id} style={styles.unitBlock}>
-                        <Text style={[styles.unitLabel, isRTL && styles.rtlText]}>{unit.title}</Text>
-                        <View style={styles.path}>
-                          {lessons.map((lesson, i) => {
-                            const nodeState = lessonNodeState(lesson);
-                            const offset = i % 2 === 0 ? 0 : 28;
-                            return (
-                              <TouchableOpacity
-                                key={lesson.id}
-                                disabled={nodeState === 'locked'}
-                                onPress={() => startLesson(lesson)}
-                                activeOpacity={0.85}
-                                style={[
-                                  styles.node,
-                                  { marginLeft: isRTL ? 0 : offset, marginRight: isRTL ? offset : 0 },
-                                  nodeState === 'done'   && styles.nodeDone,
-                                  nodeState === 'locked' && styles.nodeLocked,
-                                ]}
-                              >
-                                <Text style={styles.nodeIcon}>
-                                  {nodeState === 'locked' ? '🔒' : nodeState === 'done' ? '⭐' : '📖'}
-                                </Text>
-                                <Text style={[styles.nodeTitle, nodeState === 'locked' && styles.nodeTitleLocked]} numberOfLines={2}>
-                                  {lesson.title}
-                                </Text>
-                              </TouchableOpacity>
-                            );
-                          })}
-                          {lessons.length > 0 && (
-                            <View style={[styles.checkpoint, { alignSelf: isRTL ? 'flex-start' : 'flex-end' }]}>
-                              <Text style={styles.checkpointText}>🏁</Text>
-                            </View>
-                          )}
+                        <View style={styles.unitBanner}>
+                          <Text style={styles.unitBannerEyebrow}>
+                            {t.home.unitPrefix} {String(unit.id)}
+                          </Text>
+                          <Text style={[styles.unitBannerTitle, isRTL && styles.rtlText]}>{unit.title}</Text>
+                          <TouchableOpacity
+                            style={styles.unitBannerBtn}
+                            onPress={() => {
+                              const target = lessons.find(l => lessonNodeState(l) !== 'locked' && !progress.completed_lesson_ids.includes(l.id))
+                                ?? lessons[0];
+                              if (target) startLesson(target);
+                            }}
+                          >
+                            <Text style={styles.unitBannerBtnText}>{t.quiz.continue}</Text>
+                          </TouchableOpacity>
                         </View>
+                        <SkillPath
+                          nodes={lessons.map(lesson => ({ id: lesson.id, title: lesson.title, state: lessonNodeState(lesson) }))}
+                          onPressNode={(lessonId) => {
+                            const lesson = lessons.find(l => l.id === lessonId);
+                            if (lesson) startLesson(lesson);
+                          }}
+                        />
                       </View>
                     );
                   })}
@@ -192,36 +181,23 @@ const styles = StyleSheet.create({
     backgroundColor: colors.gold, alignItems: 'center', justifyContent: 'center', ...shadow.sm,
   },
   avatarText:   { fontSize: 18, fontFamily: fonts.headingXB, color: colors.white },
-  statsRow:     { alignItems: 'center', gap: 12 },
-  streakBadge:  {
-    alignItems: 'center', gap: 4,
-    backgroundColor: 'rgba(255,255,255,0.15)', borderRadius: radius.full,
+  pillsRow:     { gap: 8 },
+  pill: {
+    backgroundColor: 'rgba(255,255,255,0.18)', borderRadius: radius.full,
     paddingHorizontal: 12, paddingVertical: 6,
   },
-  streakIcon:    { fontSize: 16 },
-  streakText:    { color: colors.white, fontSize: 13, fontFamily: fonts.semibold },
-  xpWrapper:     { flex: 1 },
-  categoryBlock: { marginHorizontal: spacing.md, marginTop: spacing.lg },
+  pillText:       { color: colors.white, fontSize: 13, fontFamily: fonts.semibold },
+  categoryBlock:  { marginHorizontal: spacing.md, marginTop: spacing.lg },
   categoryHeader: { alignItems: 'center', paddingVertical: 12, paddingHorizontal: spacing.md, gap: 10, borderRadius: radius.lg, marginBottom: spacing.md },
   categoryIcon:   { fontSize: 20 },
   categoryTitle:  { fontSize: 16, fontFamily: fonts.heading },
   unitBlock:      { marginBottom: spacing.lg },
-  unitLabel:      { fontSize: 13, fontFamily: fonts.semibold, color: colors.textMuted, marginBottom: spacing.sm, textTransform: 'uppercase', letterSpacing: 0.5 },
-  path:           { gap: 14, alignItems: 'flex-start' },
-  node: {
-    width: 140, alignItems: 'center', gap: 6,
-    backgroundColor: colors.card, borderRadius: radius.lg,
-    paddingVertical: 14, paddingHorizontal: 10, ...shadow.sm,
-    borderWidth: 1.5, borderColor: colors.neutral,
+  unitBanner: {
+    backgroundColor: colors.primary, borderRadius: radius.xl,
+    padding: spacing.md, marginBottom: spacing.md, ...shadow.md,
   },
-  nodeDone:        { backgroundColor: colors.primaryPale, borderColor: colors.correct },
-  nodeLocked:      { opacity: 0.55 },
-  nodeIcon:        { fontSize: 22 },
-  nodeTitle:       { fontSize: 12.5, fontFamily: fonts.semibold, color: colors.text, textAlign: 'center' },
-  nodeTitleLocked: { color: colors.textLight },
-  checkpoint: {
-    width: 44, height: 44, borderRadius: 22, backgroundColor: colors.goldPale,
-    alignItems: 'center', justifyContent: 'center', borderWidth: 2, borderColor: colors.goldLight,
-  },
-  checkpointText: { fontSize: 18 },
+  unitBannerEyebrow: { fontSize: 11, fontFamily: fonts.semibold, color: 'rgba(255,255,255,0.75)', letterSpacing: 1, marginBottom: 2 },
+  unitBannerTitle:   { fontSize: 18, fontFamily: fonts.heading, color: colors.white, marginBottom: 12 },
+  unitBannerBtn:     { backgroundColor: colors.white, borderRadius: radius.full, paddingVertical: 10, alignItems: 'center' },
+  unitBannerBtnText: { fontSize: 14, fontFamily: fonts.semibold, color: colors.primaryDark },
 });

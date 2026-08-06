@@ -16,6 +16,22 @@ export default {
     completed:      'مكتمل',
     locked:         'مقفل',
     lessonsUnit:    'دروس',
+    unitPrefix:     'الوحدة',
+    heartsOutTitle: 'نفدت قلوبك 💔',
+    heartsOutMessage: (mins) => `سيتجدد القلب التالي خلال ${mins} دقيقة.`,
+    refillWithGems: (cost) => `💎 إعادة تعبئة مقابل ${cost}`,
+  },
+
+  nav: {
+    home:    'الرئيسية',
+    courses: 'الدورات',
+    quests:  'المهام',
+  },
+
+  comingSoon: {
+    title:   'قريباً',
+    courses: 'قسم الدورات قيد الإعداد.',
+    quests:  'قسم المهام قيد الإعداد.',
   },
 
   // Quiz
