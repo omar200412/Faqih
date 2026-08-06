@@ -284,3 +284,17 @@ class UserProgressAPITests(APITestCase):
         UserProgress.objects.create(device_id='zero-hearts-device', hearts=0)
         res = self.client.post('/api/progress/zero-hearts-device/answer/', {'correct': False}, format='json')
         self.assertEqual(res.data['hearts'], 0)
+
+    def test_completing_a_lesson_awards_gems_and_records_it(self):
+        res = self.client.post(
+            '/api/progress/complete-device/complete-lesson/', {'lesson_id': 7}, format='json'
+        )
+        self.assertEqual(res.status_code, 200)
+        self.assertEqual(res.data['gems'], 10)
+        self.assertEqual(res.data['completed_lesson_ids'], [7])
+
+    def test_completing_the_same_lesson_twice_does_not_double_award(self):
+        self.client.post('/api/progress/repeat-device/complete-lesson/', {'lesson_id': 3}, format='json')
+        res = self.client.post('/api/progress/repeat-device/complete-lesson/', {'lesson_id': 3}, format='json')
+        self.assertEqual(res.data['gems'], 10)
+        self.assertEqual(res.data['completed_lesson_ids'], [3])

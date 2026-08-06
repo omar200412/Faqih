@@ -98,3 +98,13 @@ class UserProgressViewSet(viewsets.ViewSet):
                 obj.last_heart_lost_at = timezone.now()
         obj.save()
         return Response(UserProgressSerializer(obj).data)
+
+    @action(detail=True, methods=['post'], url_path='complete-lesson')
+    def complete_lesson(self, request, pk=None):
+        obj = self._get_or_create(pk)
+        lesson_id = request.data.get('lesson_id')
+        if lesson_id is not None and lesson_id not in obj.completed_lesson_ids:
+            obj.completed_lesson_ids.append(lesson_id)
+            obj.gems += GEMS_PER_LESSON
+            obj.save()
+        return Response(UserProgressSerializer(obj).data)
