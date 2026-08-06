@@ -298,3 +298,21 @@ class UserProgressAPITests(APITestCase):
         res = self.client.post('/api/progress/repeat-device/complete-lesson/', {'lesson_id': 3}, format='json')
         self.assertEqual(res.data['gems'], 10)
         self.assertEqual(res.data['completed_lesson_ids'], [3])
+
+    def test_refill_spends_gems_and_maxes_hearts(self):
+        from .models import UserProgress
+        UserProgress.objects.create(device_id='refill-device', hearts=0, gems=60)
+        res = self.client.post('/api/progress/refill-device/refill-hearts/', {}, format='json')
+        self.assertEqual(res.status_code, 200)
+        self.assertEqual(res.data['hearts'], 3)
+        self.assertEqual(res.data['gems'], 10)
+        self.assertIsNone(res.data['last_heart_lost_at'])
+
+    def test_refill_fails_with_insufficient_gems(self):
+        from .models import UserProgress
+        UserProgress.objects.create(device_id='poor-device', hearts=0, gems=10)
+        res = self.client.post('/api/progress/poor-device/refill-hearts/', {}, format='json')
+        self.assertEqual(res.status_code, 400)
+        p = UserProgress.objects.get(device_id='poor-device')
+        self.assertEqual(p.hearts, 0)
+        self.assertEqual(p.gems, 10)

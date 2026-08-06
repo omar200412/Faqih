@@ -108,3 +108,14 @@ class UserProgressViewSet(viewsets.ViewSet):
             obj.gems += GEMS_PER_LESSON
             obj.save()
         return Response(UserProgressSerializer(obj).data)
+
+    @action(detail=True, methods=['post'], url_path='refill-hearts')
+    def refill_hearts(self, request, pk=None):
+        obj = self._get_or_create(pk)
+        if obj.gems < HEART_REFILL_COST:
+            return Response({'detail': 'Yetersiz elmas'}, status=400)
+        obj.gems -= HEART_REFILL_COST
+        obj.hearts = obj.hearts_max
+        obj.last_heart_lost_at = None
+        obj.save()
+        return Response(UserProgressSerializer(obj).data)
