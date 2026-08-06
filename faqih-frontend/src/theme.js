@@ -3,11 +3,11 @@
 // blue secondary, orange tertiary, gray neutral, Plus Jakarta Sans typeface.
 
 export const colors = {
-  // Primary — green
-  primary:        '#43A047',
-  primaryLight:   '#66BB6A',
-  primaryDark:    '#1B5E20',
-  primaryPale:    '#E8F5E9',
+  // Primary — green (brighter, matches the FiqhQuest-style reference)
+  primary:        '#58CC02',
+  primaryLight:   '#7FE030',
+  primaryDark:    '#3C8C00',
+  primaryPale:    '#EAF9DC',
 
   // Secondary — blue
   secondary:      '#1E88E5',
