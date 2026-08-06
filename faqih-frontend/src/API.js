@@ -1,6 +1,8 @@
 // src/api.js — Faqih API Client
 
 import axios from 'axios';
+import AsyncStorage from '@react-native-async-storage/async-storage';
+import * as Crypto from 'expo-crypto';
 
 // ── Change this to your machine's local IP when running backend locally ──────
 // e.g. 'http://192.168.1.42:8000'  (do NOT use localhost on a real device)
@@ -41,6 +43,68 @@ export async function getLesson(id) {
   } catch {
     console.warn('API unavailable — using mock data');
     return MOCK_LESSONS[id] ?? null;
+  }
+}
+
+// ── Device identity & progress ──────────────────────────────────────────────
+
+const DEVICE_ID_KEY = '@faqih_device_id';
+
+export async function getDeviceId() {
+  const existing = await AsyncStorage.getItem(DEVICE_ID_KEY);
+  if (existing) return existing;
+  const id = Crypto.randomUUID();
+  await AsyncStorage.setItem(DEVICE_ID_KEY, id);
+  return id;
+}
+
+export const DEFAULT_PROGRESS = {
+  device_id: null,
+  hearts: 3,
+  hearts_max: 3,
+  last_heart_lost_at: null,
+  gems: 0,
+  xp: 0,
+  streak: 0,
+  completed_lesson_ids: [],
+};
+
+export async function getProgress(deviceId) {
+  try {
+    const res = await client.get(`/api/progress/${deviceId}/`);
+    return res.data;
+  } catch {
+    console.warn('Progress API unavailable — using default progress');
+    return DEFAULT_PROGRESS;
+  }
+}
+
+export async function postAnswer(deviceId, correct) {
+  try {
+    const res = await client.post(`/api/progress/${deviceId}/answer/`, { correct });
+    return res.data;
+  } catch {
+    console.warn('Progress API unavailable — answer not recorded');
+    return null;
+  }
+}
+
+export async function postCompleteLesson(deviceId, lessonId) {
+  try {
+    const res = await client.post(`/api/progress/${deviceId}/complete-lesson/`, { lesson_id: lessonId });
+    return res.data;
+  } catch {
+    console.warn('Progress API unavailable — lesson completion not recorded');
+    return null;
+  }
+}
+
+export async function postRefillHearts(deviceId) {
+  try {
+    const res = await client.post(`/api/progress/${deviceId}/refill-hearts/`, {});
+    return { ok: true, progress: res.data };
+  } catch (err) {
+    return { ok: false, detail: err.response?.data?.detail ?? 'Yenileme başarısız oldu' };
   }
 }
 
