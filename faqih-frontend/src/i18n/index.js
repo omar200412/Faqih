@@ -1,8 +1,9 @@
 // src/i18n/index.js — Language context, hook, and RTL manager
 
 import React, { createContext, useContext, useState, useEffect } from 'react';
-import { I18nManager } from 'react-native';
+import { I18nManager, Platform } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import * as Updates from 'expo-updates';
 
 import tr from './tr';
 import en from './en';
@@ -26,17 +27,24 @@ export function LanguageProvider({ children }) {
     });
   }, []);
 
-  const applyLang = (lang, save = true) => {
+  const applyLang = async (lang, save = true) => {
     // Apply RTL for Arabic
     const isRTL = lang.dir === 'rtl';
-    if (I18nManager.isRTL !== isRTL) {
+    const directionChanged = I18nManager.isRTL !== isRTL;
+    if (directionChanged) {
       I18nManager.allowRTL(isRTL);
       I18nManager.forceRTL(isRTL);
-      // Note: on a real device you'd call Updates.reloadAsync() here
-      // to fully apply RTL. In Expo Go it takes effect on next reload.
     }
     setT(lang);
-    if (save) AsyncStorage.setItem(STORAGE_KEY, lang.lang);
+    if (save) await AsyncStorage.setItem(STORAGE_KEY, lang.lang);
+    // I18nManager's RTL flag only takes visual effect after the JS bundle
+    // reloads — without this, switching languages mid-session leaves native
+    // layout mirroring (and any un-isRTL-aware styling) stuck on whichever
+    // direction was active at last app launch, showing the *previous*
+    // language's direction instead of the one just selected.
+    if (directionChanged && Platform.OS !== 'web') {
+      try { await Updates.reloadAsync(); } catch { /* not available (e.g. plain Expo Go without dev client) */ }
+    }
   };
 
   return (
